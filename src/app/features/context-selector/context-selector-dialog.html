@@ -5,8 +5,8 @@
     @if (showOrganizationSelect()) {
       <mat-form-field>
         <mat-label>Organización</mat-label>
-        <mat-select formControlName="organization" [compareWith]="compareById">
-          @for (organization of data.organizations; track organization.id) {
+        <mat-select formControlName="organization" [compareWith]="compareByName">
+          @for (organization of data.organizations; track organization.name) {
             <mat-option [value]="organization">{{ organization.name }}</mat-option>
           }
         </mat-select>
@@ -22,8 +22,8 @@
     @if (showOrchestrationSelect()) {
       <mat-form-field>
         <mat-label>Orquestación</mat-label>
-        <mat-select formControlName="orchestration" [compareWith]="compareById">
-          @for (orchestration of orchestrations(); track orchestration.id) {
+        <mat-select formControlName="orchestration" [compareWith]="compareByName">
+          @for (orchestration of orchestrations(); track orchestration.name) {
             <mat-option [value]="orchestration">{{ orchestration.name }}</mat-option>
           }
         </mat-select>

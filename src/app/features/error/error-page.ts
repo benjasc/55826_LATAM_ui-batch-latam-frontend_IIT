@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 
-/** Página de error genérica. title/message llegan desde el `data` de la ruta. */
+/**
+ * Página de error genérica. En las rutas, title/message llegan desde `data`;
+ * también se puede usar directamente como componente.
+ */
 @Component({
   selector: 'app-error-page',
   imports: [RouterLink, MatButtonModule],
@@ -13,4 +16,5 @@ import { RouterLink } from '@angular/router';
 export class ErrorPage {
   readonly title = input('¡Página no encontrada!');
   readonly message = input('La página que busca no existe.');
+  readonly showHomeLink = input(true);
 }

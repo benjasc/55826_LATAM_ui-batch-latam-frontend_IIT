@@ -44,20 +44,21 @@
 |---|---|
 | Proyecto Angular 20 + Material 3 + grid de Bootstrap | ✅ Hecho |
 | Tema Equifax (rojo `#981e32`) y estructura de carpetas | ✅ Hecho |
-| Modal de selección Organización → Orquestación | ✅ Hecho (datos de prueba) |
+| Modal de selección Organización → Orquestación | ✅ Hecho, **conectado al API real** (`GET /api/organizations`) |
 | Header con navegación y cambio de contexto | ✅ Hecho |
 | Pizarra de Trabajo | ✅ Hecho (datos de prueba) |
 | Nuevo Procesamiento (carga de CSV) | ✅ Hecho (subida simulada) |
 | Buscar Procesos (con selector de usuario para administradores) | ✅ Hecho (datos de prueba) |
 | Páginas de error 403, 500 y no encontrada | ✅ Hecho |
 | Pruebas unitarias (Karma/Jasmine): 36 en verde | ✅ Hecho |
-| **Handshake con Liferay (token + dominio)** | ❌ Pendiente |
-| **Integración HTTP con el backend (reemplazar los datos de prueba)** | ❌ Pendiente |
+| Configuración de ejecución (`APP_CONFIG`), token local (`token.json`), proxy e interceptores de URL base y auth | ✅ Hecho |
+| **Handshake con Liferay (token + dominio)** | ❌ Pendiente (stub en `load-app-config.ts`) |
+| **Integración HTTP del resto de pantallas (Pizarra, Nuevo Procesamiento, Buscar)** | ❌ Pendiente (siguen con datos de prueba) |
 | **Subida real a MFT y descargas reales** | ❌ Pendiente |
-| Interceptores (auth, errores, correlation id) y guard de roles | ❌ Pendiente |
+| Interceptores de errores globales y correlation id, guard de roles | ❌ Pendiente |
 | Jest, ESLint, Dockerfile, nginx, `env.js` y Jenkins | ❌ Pendiente |
 
-**Todos los datos son de prueba** (mocks en memoria). Cada punto que hay que reemplazar está marcado con `// TODO:` en el código.
+**Solo las organizaciones vienen del backend.** Los demás datos son de prueba (mocks en memoria). Cada punto que hay que reemplazar está marcado con `// TODO:` en el código.
 
 ---
 
@@ -86,6 +87,13 @@
 src/
 ├── app/
 │   ├── core/                         # Lo global y único en la app
+│   │   ├── config/
+│   │   │   ├── app-config.ts               # APP_CONFIG { apiBaseUrl, token } (InjectionToken)
+│   │   │   ├── load-app-config.ts          # Resuelve APP_CONFIG antes del bootstrap (local / Liferay)
+│   │   │   └── api-endpoints.ts            # API_PREFIX y rutas del backend (API.organizations, ...)
+│   │   ├── http/
+│   │   │   ├── api-base-url.interceptor.ts # Antepone apiBaseUrl a las rutas relativas
+│   │   │   └── auth.interceptor.ts         # Authorization: Bearer (solo rutas de nuestro backend)
 │   │   ├── i18n/
 │   │   │   ├── spanish-date-adapter.ts     # Calendario dd/MM/yyyy + provideSpanishDates()
 │   │   │   └── spanish-paginator-intl.ts   # "Registros por página", "1 – 15 de 23"
@@ -95,7 +103,7 @@ src/
 │   │   │   └── user.model.ts               # User, CurrentUser, Role
 │   │   └── services/
 │   │       ├── context.service.ts          # Organización + orquestación activas (signals)
-│   │       ├── organization.service.ts     # MOCK: organizaciones del usuario
+│   │       ├── organization.service.ts     # HTTP: GET /api/organizations
 │   │       ├── batch-process.service.ts    # MOCK: listar, buscar, crear proceso, descargas
 │   │       ├── user.service.ts             # MOCK: usuario actual, isAdmin, usuarios de la org
 │   │       └── notification.service.ts     # Avisos (MatSnackBar) de éxito y error
@@ -113,13 +121,17 @@ src/
 │   ├── app.routes.ts                 # Rutas con loadComponent (carga diferida)
 │   └── app.ts / app.html             # Shell: header + router-outlet; abre el modal al iniciar
 ├── environments/
-│   ├── environment.ts                # Producción (ng build)
-│   └── environment.development.ts    # Local (ng serve), con useMocks y mockAdmin
+│   ├── environment.model.ts          # Interfaz Environment
+│   ├── environment.ts                # Producción (ng build): token vacío (lo entrega Liferay)
+│   └── environment.development.ts    # Local (ng serve): importa ../../token.json, mockAdmin
 ├── styles/
 │   ├── _palette.scss                 # Colores Equifax como variables SCSS y CSS (--brand-red, ...)
 │   ├── _theme-colors.scss            # Paletas M3 generadas (ng g @angular/material:theme-color)
 │   └── _theme.scss                   # mat.theme + overrides (rojo exacto, botones rectos, campos sin fondo)
 └── styles.scss                       # Importa los parciales + estilos base globales
+scripts/ensure-token.mjs              # Crea token.json vacío si no existe (postinstall / prestart)
+proxy.config.json                     # /ui-batch-latam-backend/** → http://localhost:8080
+token.json                            # Token local (NO versionado, en .gitignore)
 ```
 
 **Alias de imports** (`tsconfig.json`): `@core/*`, `@layout/*`, `@shared/*`, `@features/*`, `@env/*`. Hay que usarlos siempre en lugar de rutas relativas `../../`.
@@ -217,6 +229,8 @@ batch_output (id, output_name)
 batch_output_result (output_id FK, process_id FK, records_quantity)   -- PK (output_id, process_id)
 ```
 
+**El API no envía `id` de organización ni de orquestación**: el **nombre** es el identificador en todo el front (modal, `ContextService`, parámetros de los servicios).
+
 **Relación con los modelos del front:**
 
 | Front | Backend |
@@ -234,24 +248,40 @@ batch_output_result (output_id FK, process_id FK, records_quantity)   -- PK (out
 
 | Servicio | Método | Qué simula | Reemplazar por |
 |---|---|---|---|
-| `OrganizationService` | `getOrganizations()` | 3 organizaciones: ARICBOOKSTORE (2 orquestaciones), EQUIFAX CHILE (1) y una sin orquestaciones | GET de organizaciones y orquestaciones del usuario |
+| ~~`OrganizationService`~~ | ~~`getOrganizations()`~~ | ✅ **Ya usa el API real**: `GET /ui-batch-latam-backend/api/organizations` | — |
 | `UserService` | `currentUser` (signal) | "Usuario Demo" (id 1), admin si `environment.mockAdmin` | Usuario y roles desde el backend o el token |
-| `UserService` | `getOrganizationUsers(orgId)` | 3 usuarios | GET de usuarios de la organización (solo para admin) |
-| `BatchProcessService` | `getProcesses(org, orch, userId)` | Lista por orquestación (testmodel: 12, modelo-riesgo: 40, modelo-chile: 0) | GET de procesos del usuario |
+| `UserService` | `getOrganizationUsers(organization)` | 3 usuarios | GET de usuarios de la organización (solo para admin) |
+| `BatchProcessService` | `getProcesses(organization, orchestration, userId)` | Lista por organización/orquestación (de 5 a 34 procesos, según el nombre) | GET de procesos del usuario |
 | `BatchProcessService` | `searchProcesses(criteria)` | Filtra por usuario y rango de fechas | POST/GET de búsqueda |
-| `BatchProcessService` | `createProcess(org, orch, userId, file)` | Guarda en memoria con estado PENDIENTE | Subida a MFT + registro del proceso |
+| `BatchProcessService` | `createProcess(organization, orchestration, userId, file)` | Guarda en memoria con estado PENDIENTE | Subida a MFT + registro del proceso |
 | `BatchProcessService` | `downloadOutput` / `downloadObservations` | Blob CSV/TXT de ejemplo | Descarga real (backend/MFT) |
 
 - **Persistencia de los mocks**: guardan los datos en memoria (`mockStore`) y se pierden al recargar la página.
 - **Fechas de prueba**: se generan respecto del día de hoy, para que la búsqueda de los últimos 30 días encuentre resultados.
-- **Flags en `environment.development.ts`**:
-  - `useMocks: true`. Todavía no se lee en ninguna parte; la idea es usarlo para alternar entre datos de prueba y HTTP durante la integración.
-  - `mockAdmin: true`. El usuario demo es administrador; poner `false` para probar como usuario normal.
+- **Flag en `environment.development.ts`**: `mockAdmin: true` hace que el usuario demo sea administrador; poner `false` para probar como usuario normal.
 - **Firmas de los métodos**: las pantallas solo dependen de ellas. Si se mantienen, la integración no requiere tocar los componentes.
 
 ---
 
 ## 8. Pendiente: integración con el backend (guía)
+
+### 8.0 Ya implementado: configuración, token local y host dinámico
+- **`main.ts`** llama a `loadAppConfig()` y recién después hace `bootstrapApplication`, entregando `APP_CONFIG = { apiBaseUrl, token }`.
+- **Modo local** (`ng serve`, `production: false`):
+  - el token se lee de **`token.json`** en la raíz del proyecto. Es solo el token entre comillas (`"eyJ..."`); si se pega con el prefijo `Bearer `, se quita;
+  - `apiBaseUrl` es `''`, así que las llamadas van a `http://localhost:4200/ui-batch-latam-backend/...` y el **proxy** (`proxy.config.json`, configurado en `angular.json`) las reenvía a `http://localhost:8080`.
+- **`token.json`**:
+  - está en `.gitignore`;
+  - lo crea vacío `scripts/ensure-token.mjs` (`postinstall` y `prestart`). Debe existir porque `tsconfig.app.json` compila todo `src/`, incluso en el build de producción.
+- **Modo Liferay** (`production: true`): `loadFromLiferay()` es un **stub** que devuelve `{ apiBaseUrl: '', token: '' }`. Ahí va el handshake (§8.1). El `backendDomain` que entrega Liferay es el **host dinámico** por ambiente.
+- **Interceptores funcionales** (en `app.config.ts`, en este orden):
+  1. `apiBaseUrlInterceptor` antepone `apiBaseUrl` a las URLs que empiezan con `/`;
+  2. `authInterceptor` agrega `Authorization: Bearer` **solo** a las URLs que contienen `/ui-batch-latam-backend/api`, para no enviar el token a MFT ni a otros servicios.
+- **Rutas del API**: en `core/config/api-endpoints.ts`. Agregar ahí cada endpoint nuevo.
+- **Errores al obtener organizaciones** (`organizationsErrorMessage` en `context-selector.service.ts`). La app muestra el mensaje con un botón "Reintentar":
+  - 401/403 → "No autorizado…";
+  - status 0 → "No fue posible conectar con el servidor";
+  - lista vacía → "Su usuario no tiene organizaciones asociadas…".
 
 ### 8.1 Handshake con Liferay (se copia de 10490 / 11919, `src/main.ts`)
 La app corre en un iframe de Liferay y **no tiene login propio**. Patrón de 10490:
@@ -260,23 +290,29 @@ La app corre en un iframe de Liferay y **no tiene login propio**. Patrón de 104
 2. Avisar al portal con `window.parent.postMessage('AngularAppReady', '*')`. En 10490 se hace después de unos 4 s.
 3. El mensaje trae datos de Liferay. En 10490: `{ snu, sessionId, serverName, serverPort, isSecure, otk, backendDomain, ... }`. En 11919 (más simple): `{ backendDomain, accessToken }`.
 4. En 10490 se obtiene el token con `GET ${protocol}://${serverName}${port}/o/get_token?snu=..&sessionId=..&otk=..`, que devuelve `{ token: "<json con access_token>" }`.
-5. `bootstrapApplication(App, { providers: [...appConfig.providers, { provide: APP_CONFIG, useValue: { domain, token } }] })`.
-6. Para desarrollo local, usar `environment.apiBaseUrl` y un token de un archivo **no versionado**. ⚠️ El repo 11919 tiene un JWT real versionado en `token.json`; **no repetir eso**.
+5. Devolver `{ apiBaseUrl: backendDomain, token }` desde `loadFromLiferay()` en `core/config/load-app-config.ts`. `main.ts` ya lo entrega como `APP_CONFIG`.
+6. ⚠️ El repo 11919 tiene un JWT real versionado en `token.json`; **no repetir eso**. Aquí `token.json` está en `.gitignore`.
 7. Mejoras a considerar respecto de los repos anteriores:
    - **validar `event.origin`** del mensaje;
    - manejar el timeout (11919 espera 10 s) navegando a `/500`;
    - definir con el equipo qué pasa cuando el token expira. Ninguna de las UI anteriores lo refresca.
 
-### 8.2 HTTP
-- `provideHttpClient(withFetch())` ya está en `app.config.ts`. Agregar `withInterceptors([...])` con **interceptores funcionales** (`HttpInterceptorFn`):
-  - **auth**: `Authorization: Bearer <token>`. 10490 además envía `Content-Type: application/vnd.com.equifax.latam.service.v1+json`; confirmar cuál espera el backend batch.
-  - **correlation id**: header `Correlation-Id` con `crypto.randomUUID()`, como en 10490.
+### 8.2 HTTP (pendiente)
+- **Ya hechos**: URL base, auth y proxy (ver §8.0).
+- **Interceptores que faltan** (agregarlos a `withInterceptors([...])`):
+  - **correlation id**: header `Correlation-Id` con `crypto.randomUUID()`, como en 10490;
   - **error global**: 401/403 → `/403`; 5xx → `NotificationService.error(...)` o `/500` si es fatal.
-- **URL base**: tomarla de `APP_CONFIG.domain`, no de URLs escritas a mano. 11919 tenía hosts de desarrollo fijos en el código; no repetirlo.
-- **Proxy local**: crear `proxy.config.json` (`/ui-batch-ic-backend/**` → backend local) y cambiar el script a `"start": "ng serve --proxy-config proxy.config.json"`.
+- **Content-Type**: 10490 envía `application/vnd.com.equifax.latam.service.v1+json`; confirmar si el backend batch lo requiere.
+- **Hosts**: no escribir hosts a mano en el código. 11919 lo hacía; no repetirlo.
 
-### 8.3 Endpoints conocidos de la UI anterior (11919)
-Sirven como referencia. **Hay que confirmar con el backend actual** si siguen vigentes; el prefijo era `{domain}/ui-batch-ic-backend`.
+### 8.3 Endpoints
+**Backend nuevo** (`ui-batch-latam-backend`, puerto local 8080):
+
+| Uso | Método + ruta | Estado |
+|---|---|---|
+| Organizaciones del usuario con sus orquestaciones | `GET /ui-batch-latam-backend/api/organizations` → `[{ name, orchestrations: [{ name }] }]` | ✅ Integrado (`OrganizationService`) |
+
+**Endpoints de la UI anterior (11919)**: sirven solo como referencia del backend antiguo (`/ui-batch-ic-backend`). Confirmar los equivalentes con el equipo de backend.
 
 | Uso | Método + ruta | Notas |
 |---|---|---|
@@ -316,19 +352,20 @@ Sirven como referencia. **Hay que confirmar con el backend actual** si siguen vi
 ## 9. Cómo correr
 
 ```bash
-npm install
-npm start                       # http://localhost:4200 (ng serve)
+npm install                     # también crea token.json vacío si no existe
+# Pega tu token en token.json (entre comillas) y levanta el backend en :8080
+npm start                       # http://localhost:4200 (ng serve + proxy a :8080)
 ng test --watch=false           # pruebas (Karma + Chrome)
 ng build                        # build de producción → dist/ui-batch-latam-frontend
 ```
 
 **Prueba manual rápida:**
 
-1. Al abrir la app, elige ARICBOOKSTORE → testmodel.
+1. Al abrir la app, elige una organización y una orquestación. Vienen del backend real; sin backend o sin token verás un error con "Reintentar".
 2. En la Pizarra, prueba Salida y Ver Obs.
 3. En Nuevo Procesamiento, sube un `.csv` y verás que aparece en la Pizarra.
 4. En Buscar Procesos, elige un rango dentro de los últimos 30 días.
-5. Con 🏢 cambia a modelo-riesgo (muchos procesos y paginación) o a EQUIFAX CHILE (sin procesos).
+5. Con 🏢 cambia a otra orquestación; la cantidad de procesos de prueba varía según el nombre.
 
 ---
 

@@ -74,7 +74,7 @@ export class SearchPage {
 
   /** Usuarios de la organización activa (solo se cargan para administradores). */
   protected readonly users = rxResource({
-    params: () => (this.isAdmin() ? this.context.organization()?.id : undefined),
+    params: () => (this.isAdmin() ? this.context.organization()?.name : undefined),
     stream: ({ params }) => (params ? this.userService.getOrganizationUsers(params) : of([])),
   });
 
@@ -89,7 +89,7 @@ export class SearchPage {
       const organization = this.context.organization();
       const orchestration = this.context.orchestration();
       return filters && organization && orchestration
-        ? { ...filters, organizationId: organization.id, orchestrationId: orchestration.id }
+        ? { ...filters, organization: organization.name, orchestration: orchestration.name }
         : undefined;
     },
     stream: ({ params }) => (params ? this.processService.searchProcesses(params) : of([])),

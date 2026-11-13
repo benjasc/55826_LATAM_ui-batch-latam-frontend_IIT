@@ -46,8 +46,8 @@ describe('SearchPage', () => {
     spyOn(userService, 'currentUser').and.returnValue({ ...MOCK_USERS[0], roles: [Role.User] });
     spyOn(userService, 'getOrganizationUsers').and.returnValue(of(MOCK_USERS));
     TestBed.inject(ContextService).setContext(
-      { id: 1, name: 'ORG', orchestrations: [{ id: 9, name: 'm' }] },
-      { id: 9, name: 'm' },
+      { name: 'ORG', orchestrations: [{ name: 'm' }] },
+      { name: 'm' },
     );
 
     const fixture = TestBed.createComponent(SearchPage);
@@ -87,8 +87,8 @@ describe('SearchPage', () => {
       startDate: new Date(2026, 10, 1),
       endDate: new Date(2026, 10, 6),
       userId: 2,
-      organizationId: 1,
-      orchestrationId: 9,
+      organization: 'ORG',
+      orchestration: 'm',
     });
     const rows = Array.from(el.querySelectorAll('tr.mat-mdc-row:not(.mat-mdc-no-data-row)')).map((r) => [
       r.children[0].textContent?.trim(),

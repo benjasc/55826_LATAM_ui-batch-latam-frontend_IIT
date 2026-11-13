@@ -1,37 +1,23 @@
-import { Injectable } from '@angular/core';
-import { Observable, delay, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
 
-import { Organization } from '@core/models/organization.model';
-
-/** Datos de prueba mientras no exista la API del backend. */
-const MOCK_ORGANIZATIONS: Organization[] = [
-  {
-    id: 1,
-    name: 'ARICBOOKSTORE',
-    orchestrations: [
-      { id: 1, name: 'testmodel' },
-      { id: 2, name: 'modelo-riesgo' },
-    ],
-  },
-  {
-    id: 2,
-    name: 'EQUIFAX CHILE',
-    orchestrations: [{ id: 3, name: 'modelo-chile' }],
-  },
-  {
-    id: 3,
-    name: 'ORGANIZACION SIN MODELOS',
-    orchestrations: [],
-  },
-];
+import { API } from '@core/config/api-endpoints';
+import { Organization, OrganizationDto } from '@core/models/organization.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationService {
-  /**
-   * Organizaciones (con sus orquestaciones) del usuario.
-   * TODO: reemplazar por la llamada HTTP al backend.
-   */
+  private readonly http = inject(HttpClient);
+
+  /** Organizaciones del usuario autenticado, con sus orquestaciones. */
   getOrganizations(): Observable<Organization[]> {
-    return of(MOCK_ORGANIZATIONS).pipe(delay(300));
+    return this.http.get<OrganizationDto[]>(API.organizations).pipe(
+      map((organizations) =>
+        (organizations ?? []).map((org) => ({
+          name: org.name,
+          orchestrations: (org.orchestrations ?? []).map((orch) => ({ name: orch.name })),
+        })),
+      ),
+    );
   }
 }

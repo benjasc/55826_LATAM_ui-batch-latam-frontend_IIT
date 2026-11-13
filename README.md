@@ -14,18 +14,26 @@ Angular 20 (standalone, signals) · Angular Material 20 (M3) · grid y utilidade
 
 ## Uso
 ```bash
-npm install
-npm start                 # http://localhost:4200
+npm install               # crea token.json vacío si no existe
+npm start                 # http://localhost:4200 (proxy /ui-batch-latam-backend → localhost:8080)
 ng test --watch=false     # pruebas unitarias
 ng build                  # build de producción → dist/ui-batch-latam-frontend
 ```
 
+## Token y backend en local
+1. Levanta el backend `ui-batch-latam-backend` en `http://localhost:8080`.
+2. Pega tu token en **`token.json`** (raíz del proyecto), entre comillas: `"eyJhbGciOi..."`.
+   - El archivo está en `.gitignore`. **Nunca lo subas.**
+   - Si cambias el token con `npm start` corriendo, la app se recarga sola.
+3. `npm start`.
+
 ## Estado
-- **Pantallas terminadas con datos de prueba**: selección de organización y orquestación, Pizarra de Trabajo, Nuevo Procesamiento y Buscar Procesos.
+- **Integrado con el backend**: selección de organización y orquestación (`GET /api/organizations`).
+- **Con datos de prueba**: Pizarra de Trabajo, Nuevo Procesamiento y Buscar Procesos.
 - **Pendiente**:
   - handshake con Liferay;
-  - integración HTTP con el backend y MFT;
-  - interceptores y guard de roles;
+  - integración HTTP del resto de las pantallas y MFT;
+  - interceptores de errores y guard de roles;
   - Jest, ESLint, Docker, nginx y Jenkins.
 
 Ver la §8 del documento de contexto.

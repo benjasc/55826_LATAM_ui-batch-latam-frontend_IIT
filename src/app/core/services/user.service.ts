@@ -26,8 +26,8 @@ export class UserService {
   readonly isAdmin = computed(() => this._currentUser().roles.includes(Role.Admin));
 
   /** Usuarios de una organización (para el selector del administrador). TODO: llamada HTTP. */
-  getOrganizationUsers(organizationId: number): Observable<User[]> {
-    void organizationId;
+  getOrganizationUsers(organization: string): Observable<User[]> {
+    void organization;
     return of(MOCK_USERS).pipe(delay(300));
   }
 }

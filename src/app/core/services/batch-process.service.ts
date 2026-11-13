@@ -8,9 +8,10 @@ const HOUR = 60 * 60_000;
 /**
  * Genera procesos de prueba distintos según la orquestación elegida,
  * repartidos en los últimos días y entre los usuarios de prueba (ids 1, 2 y 3).
+ * La cantidad (5 a 34) se deriva del nombre para que cada orquestación se vea distinta.
  */
-function buildMockProcesses(orchestrationId: number): BatchProcess[] {
-  const total = { 1: 12, 2: 40, 3: 0 }[orchestrationId] ?? 8;
+function buildMockProcesses(orchestration: string): BatchProcess[] {
+  const total = ([...orchestration].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 30) + 5;
   const today = new Date();
   const base = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0).getTime();
 
@@ -28,9 +29,9 @@ function buildMockProcesses(orchestrationId: number): BatchProcess[] {
     const ended = status === ProcessStatus.Finished || status === ProcessStatus.Cancelled;
     return {
       id: i + 1,
-      uuid: `mock-${orchestrationId}-${i + 1}`,
+      uuid: `mock-${orchestration}-${i + 1}`,
       userId: [1, 1, 2, 1, 3][i % 5],
-      fileName: `Archivo-${orchestrationId}-${String(i + 1).padStart(3, '0')}.csv`,
+      fileName: `${orchestration}-${String(i + 1).padStart(3, '0')}.csv`,
       recordsQuantity: ended ? 50 + ((i * 37) % 900) : null,
       processDate: new Date(base - (total - 1 - i) * 19 * HOUR).toISOString(),
       status,
@@ -41,16 +42,17 @@ function buildMockProcesses(orchestrationId: number): BatchProcess[] {
 
 @Injectable({ providedIn: 'root' })
 export class BatchProcessService {
-  /** "Base de datos" en memoria de los mocks, por orquestación. Se pierde al recargar la página. */
-  private readonly mockStore = new Map<number, BatchProcess[]>();
+  /** "Base de datos" en memoria de los mocks, por organización/orquestación. Se pierde al recargar la página. */
+  private readonly mockStore = new Map<string, BatchProcess[]>();
 
   /**
    * Procesos del usuario para la organización/orquestación activa (Pizarra de Trabajo).
    * TODO: reemplazar por la llamada HTTP al backend.
    */
-  getProcesses(organizationId: number, orchestrationId: number, userId: number): Observable<BatchProcess[]> {
-    void organizationId;
-    return defer(() => of(this.storeFor(orchestrationId).filter((p) => p.userId === userId))).pipe(delay(400));
+  getProcesses(organization: string, orchestration: string, userId: number): Observable<BatchProcess[]> {
+    return defer(() => of(this.storeFor(organization, orchestration).filter((p) => p.userId === userId))).pipe(
+      delay(400),
+    );
   }
 
   /**
@@ -61,7 +63,7 @@ export class BatchProcessService {
     return defer(() => {
       const from = startOfDay(criteria.startDate).getTime();
       const to = startOfDay(criteria.endDate).getTime() + 24 * HOUR;
-      const result = this.storeFor(criteria.orchestrationId).filter((p) => {
+      const result = this.storeFor(criteria.organization, criteria.orchestration).filter((p) => {
         const time = new Date(p.processDate).getTime();
         return p.userId === criteria.userId && time >= from && time < to;
       });
@@ -73,10 +75,9 @@ export class BatchProcessService {
    * Sube el archivo y registra un nuevo proceso en estado PENDIENTE.
    * TODO: reemplazar por la subida a MFT + creación del proceso en el backend.
    */
-  createProcess(organizationId: number, orchestrationId: number, userId: number, file: File): Observable<BatchProcess> {
-    void organizationId;
+  createProcess(organization: string, orchestration: string, userId: number, file: File): Observable<BatchProcess> {
     return defer(() => {
-      const store = this.storeFor(orchestrationId);
+      const store = this.storeFor(organization, orchestration);
       const process: BatchProcess = {
         id: Math.max(0, ...store.map((p) => p.id)) + 1,
         uuid: crypto.randomUUID(),
@@ -108,11 +109,12 @@ export class BatchProcessService {
     return of(new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })).pipe(delay(200));
   }
 
-  private storeFor(orchestrationId: number): BatchProcess[] {
-    if (!this.mockStore.has(orchestrationId)) {
-      this.mockStore.set(orchestrationId, buildMockProcesses(orchestrationId));
+  private storeFor(organization: string, orchestration: string): BatchProcess[] {
+    const key = `${organization}/${orchestration}`;
+    if (!this.mockStore.has(key)) {
+      this.mockStore.set(key, buildMockProcesses(orchestration));
     }
-    return this.mockStore.get(orchestrationId)!;
+    return this.mockStore.get(key)!;
   }
 }
 

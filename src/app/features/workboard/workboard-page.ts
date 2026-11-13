@@ -68,12 +68,12 @@ export class WorkboardPage {
       const organization = this.context.organization();
       const orchestration = this.context.orchestration();
       return organization && orchestration
-        ? { organizationId: organization.id, orchestrationId: orchestration.id, userId: this.user.currentUser().id }
+        ? { organization: organization.name, orchestration: orchestration.name, userId: this.user.currentUser().id }
         : undefined;
     },
     stream: ({ params }) =>
       params
-        ? this.processService.getProcesses(params.organizationId, params.orchestrationId, params.userId)
+        ? this.processService.getProcesses(params.organization, params.orchestration, params.userId)
         : of([]),
   });
 

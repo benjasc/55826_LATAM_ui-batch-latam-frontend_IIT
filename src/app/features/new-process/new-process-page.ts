@@ -77,7 +77,7 @@ export class NewProcessPage {
 
     this.uploading.set(true);
     this.processService
-      .createProcess(organization.id, orchestration.id, this.user.currentUser().id, file)
+      .createProcess(organization.name, orchestration.name, this.user.currentUser().id, file)
       .pipe(finalize(() => this.uploading.set(false)))
       .subscribe({
         next: () => {

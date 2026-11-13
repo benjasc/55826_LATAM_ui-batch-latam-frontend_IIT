@@ -1,10 +1,11 @@
 // Configuración de producción (ng build).
-export const environment = {
+import { Environment } from './environment.model';
+
+export const environment: Environment = {
   production: true,
-  /** Dominio del backend. En producción lo entregará Liferay al iniciar la app. */
+  /** En producción el dominio del backend lo entrega Liferay al iniciar la app. */
   apiBaseUrl: '',
-  /** true = usa datos de prueba en vez de llamar al backend. */
-  useMocks: false,
-  /** Solo para datos de prueba: el usuario demo tiene rol de administrador. */
+  /** En producción el token lo entrega Liferay. */
+  token: '',
   mockAdmin: false,
 };

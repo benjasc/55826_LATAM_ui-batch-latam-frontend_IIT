@@ -51,8 +51,8 @@ describe('WorkboardPage', () => {
       providers: [provideRouter([]), { provide: BatchProcessService, useValue: { getProcesses } }],
     });
     TestBed.inject(ContextService).setContext(
-      { id: 1, name: 'ORG', orchestrations: [{ id: 9, name: 'm' }] },
-      { id: 9, name: 'm' },
+      { name: 'ORG', orchestrations: [{ name: 'm' }] },
+      { name: 'm' },
     );
     const fixture = TestBed.createComponent(WorkboardPage);
     fixture.detectChanges();
@@ -63,7 +63,7 @@ describe('WorkboardPage', () => {
 
   it('carga los procesos de la organización y orquestación activas', async () => {
     await render();
-    expect(getProcesses).toHaveBeenCalledWith(1, 9, 1);
+    expect(getProcesses).toHaveBeenCalledWith('ORG', 'm', 1);
   });
 
   it('ordena más recientes primero con número correlativo descendente', async () => {

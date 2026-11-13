@@ -6,9 +6,9 @@ import { ContextService } from '@core/services/context.service';
 import { ContextSelectorDialog, ContextSelectorDialogData } from './context-selector-dialog';
 
 const ORGANIZATIONS: Organization[] = [
-  { id: 1, name: 'ORG MULTI', orchestrations: [{ id: 1, name: 'm1' }, { id: 2, name: 'm2' }] },
-  { id: 2, name: 'ORG UNICA', orchestrations: [{ id: 3, name: 'm3' }] },
-  { id: 3, name: 'ORG VACIA', orchestrations: [] },
+  { name: 'ORG MULTI', orchestrations: [{ name: 'm1' }, { name: 'm2' }] },
+  { name: 'ORG UNICA', orchestrations: [{ name: 'm3' }] },
+  { name: 'ORG VACIA', orchestrations: [] },
 ];
 
 describe('ContextSelectorDialog', () => {
@@ -40,7 +40,7 @@ describe('ContextSelectorDialog', () => {
   it('autoselecciona la orquestación cuando la organización tiene solo una', () => {
     const { cmp } = create({ organizations: ORGANIZATIONS, dismissible: false });
     cmp.form.controls.organization.setValue(ORGANIZATIONS[1]);
-    expect(cmp.form.controls.orchestration.value).toEqual({ id: 3, name: 'm3' });
+    expect(cmp.form.controls.orchestration.value).toEqual({ name: 'm3' });
     expect(cmp.showOrchestrationSelect()).toBeFalse();
   });
 
@@ -49,7 +49,7 @@ describe('ContextSelectorDialog', () => {
     cmp.form.controls.organization.setValue(ORGANIZATIONS[0]);
     cmp.form.controls.orchestration.setValue(ORGANIZATIONS[0].orchestrations[1]);
     cmp.form.controls.organization.setValue(ORGANIZATIONS[1]);
-    expect(cmp.form.controls.orchestration.value?.id).toBe(3);
+    expect(cmp.form.controls.orchestration.value?.name).toBe('m3');
   });
 
   it('marca error si la organización no tiene orquestaciones', () => {
@@ -65,8 +65,8 @@ describe('ContextSelectorDialog', () => {
     cmp.form.controls.orchestration.setValue(ORGANIZATIONS[0].orchestrations[1]);
     cmp.accept();
     const context = TestBed.inject(ContextService);
-    expect(context.organization()?.id).toBe(1);
-    expect(context.orchestration()?.id).toBe(2);
+    expect(context.organization()?.name).toBe('ORG MULTI');
+    expect(context.orchestration()?.name).toBe('m2');
     expect(close).toHaveBeenCalledWith(true);
   });
 
@@ -74,8 +74,8 @@ describe('ContextSelectorDialog', () => {
     const { cmp, el } = create({ organizations: ORGANIZATIONS, dismissible: true }, () =>
       TestBed.inject(ContextService).setContext(ORGANIZATIONS[0], ORGANIZATIONS[0].orchestrations[1]),
     );
-    expect(cmp.form.controls.organization.value?.id).toBe(1);
-    expect(cmp.form.controls.orchestration.value?.id).toBe(2);
+    expect(cmp.form.controls.organization.value?.name).toBe('ORG MULTI');
+    expect(cmp.form.controls.orchestration.value?.name).toBe('m2');
     expect(el.textContent).toContain('Cancelar');
   });
 });

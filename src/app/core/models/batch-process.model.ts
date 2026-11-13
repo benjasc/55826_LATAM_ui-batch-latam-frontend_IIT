@@ -43,8 +43,10 @@ export interface BatchProcess {
 
 /** Filtros de la pantalla Buscar Procesos. */
 export interface ProcessSearchCriteria {
-  organizationId: number;
-  orchestrationId: number;
+  /** Nombre de la organización activa. */
+  organization: string;
+  /** Nombre de la orquestación activa. */
+  orchestration: string;
   userId: number;
   startDate: Date;
   endDate: Date;

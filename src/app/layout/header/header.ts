@@ -6,7 +6,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { ContextService } from '@core/services/context.service';
-import { ContextSelectorService } from '@features/context-selector/context-selector.service';
+import { NotificationService } from '@core/services/notification.service';
+import {
+  ContextSelectorService,
+  organizationsErrorMessage,
+} from '@features/context-selector/context-selector.service';
 
 interface NavItem {
   label: string;
@@ -23,6 +27,7 @@ interface NavItem {
 })
 export class Header {
   private readonly contextSelector = inject(ContextSelectorService);
+  private readonly notification = inject(NotificationService);
   protected readonly context = inject(ContextService);
 
   protected readonly navItems: NavItem[] = [
@@ -31,6 +36,8 @@ export class Header {
   ];
 
   protected changeContext(): void {
-    this.contextSelector.open(true).subscribe();
+    this.contextSelector
+      .open(true)
+      .subscribe({ error: (error: unknown) => this.notification.error(organizationsErrorMessage(error)) });
   }
 }

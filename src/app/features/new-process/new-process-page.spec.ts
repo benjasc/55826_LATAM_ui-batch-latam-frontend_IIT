@@ -23,8 +23,8 @@ describe('NewProcessPage', () => {
       ],
     });
     TestBed.inject(ContextService).setContext(
-      { id: 1, name: 'ORG', orchestrations: [{ id: 9, name: 'm' }] },
-      { id: 9, name: 'm' },
+      { name: 'ORG', orchestrations: [{ name: 'm' }] },
+      { name: 'm' },
     );
     const fixture = TestBed.createComponent(NewProcessPage);
     fixture.detectChanges();
@@ -76,7 +76,7 @@ describe('NewProcessPage', () => {
     selectFile(file);
     finishButton().click();
 
-    expect(createProcess).toHaveBeenCalledWith(1, 9, 1, file);
+    expect(createProcess).toHaveBeenCalledWith('ORG', 'm', 1, file);
     expect(notification.success).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/workboard']);
   });

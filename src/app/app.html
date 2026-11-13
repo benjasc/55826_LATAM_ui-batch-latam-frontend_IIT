@@ -1,8 +1,17 @@
 <app-header />
 
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
 <main class="content container-fluid">
-  <!-- Las pantallas solo se muestran cuando ya hay organización y orquestación elegidas -->
-  @if (context.hasContext()) {
+  @if (startupError(); as message) {
+    <app-error-page title="¡Ha ocurrido un problema!" [message]="message" [showHomeLink]="false" />
+    <div class="retry">
+      <button mat-flat-button (click)="start()">Reintentar</button>
+    </div>
+  } @else if (context.hasContext()) {
+    <!-- Las pantallas solo se muestran cuando ya hay organización y orquestación elegidas -->
     <router-outlet />
   }
 </main>

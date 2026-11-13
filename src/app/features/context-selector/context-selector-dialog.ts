@@ -50,8 +50,9 @@ export class ContextSelectorDialog {
   );
   protected readonly showOrchestrationSelect = computed(() => this.orchestrations().length > 1);
 
-  protected readonly compareById = (a: { id: number } | null, b: { id: number } | null): boolean =>
-    a?.id === b?.id;
+  /** El backend no envía id: se compara por nombre. */
+  protected readonly compareByName = (a: { name: string } | null, b: { name: string } | null): boolean =>
+    a?.name === b?.name;
 
   constructor() {
     // Al cambiar la organización: limpiar la orquestación y autoseleccionar si hay solo una.
@@ -82,7 +83,7 @@ export class ContextSelectorDialog {
     const { organizations } = this.data;
     const current = this.context.organization();
     const organization =
-      organizations.find((org) => org.id === current?.id) ?? (organizations.length === 1 ? organizations[0] : null);
+      organizations.find((org) => org.name === current?.name) ?? (organizations.length === 1 ? organizations[0] : null);
 
     if (!organization) {
       return;
@@ -90,7 +91,7 @@ export class ContextSelectorDialog {
     this.form.controls.organization.setValue(organization);
 
     const currentOrchestration = this.context.orchestration();
-    const orchestration = organization.orchestrations.find((orch) => orch.id === currentOrchestration?.id);
+    const orchestration = organization.orchestrations.find((orch) => orch.name === currentOrchestration?.name);
     if (orchestration) {
       this.form.controls.orchestration.setValue(orchestration);
     }
