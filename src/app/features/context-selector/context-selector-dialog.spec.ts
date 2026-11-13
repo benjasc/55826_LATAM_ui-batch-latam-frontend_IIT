@@ -8,7 +8,6 @@ import { ContextSelectorDialog, ContextSelectorDialogData } from './context-sele
 const ORGANIZATIONS: Organization[] = [
   { name: 'ORG MULTI', orchestrations: [{ name: 'm1' }, { name: 'm2' }] },
   { name: 'ORG UNICA', orchestrations: [{ name: 'm3' }] },
-  { name: 'ORG VACIA', orchestrations: [] },
 ];
 
 describe('ContextSelectorDialog', () => {
@@ -50,13 +49,6 @@ describe('ContextSelectorDialog', () => {
     cmp.form.controls.orchestration.setValue(ORGANIZATIONS[0].orchestrations[1]);
     cmp.form.controls.organization.setValue(ORGANIZATIONS[1]);
     expect(cmp.form.controls.orchestration.value?.name).toBe('m3');
-  });
-
-  it('marca error si la organización no tiene orquestaciones', () => {
-    const { cmp } = create({ organizations: ORGANIZATIONS, dismissible: false });
-    cmp.form.controls.organization.setValue(ORGANIZATIONS[2]);
-    expect(cmp.form.controls.organization.hasError('noOrchestrations')).toBeTrue();
-    expect(cmp.form.invalid).toBeTrue();
   });
 
   it('al aceptar guarda el contexto y cierra con true', () => {

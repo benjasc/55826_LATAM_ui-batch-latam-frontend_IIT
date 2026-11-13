@@ -1,7 +1,10 @@
 <app-header />
 
 @if (loading()) {
-  <mat-progress-bar mode="indeterminate" />
+  <!-- Mismo fondo y posición que el modal, para que el modal reemplace a la tarjeta sin salto visual -->
+  <div class="loading-backdrop">
+    <app-loading-card message="Cargando sus organizaciones…" hint="Esto puede tardar unos segundos." />
+  </div>
 }
 
 <main class="content container-fluid">

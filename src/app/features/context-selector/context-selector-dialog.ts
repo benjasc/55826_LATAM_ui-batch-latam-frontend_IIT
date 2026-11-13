@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,15 +10,10 @@ import { Orchestration, Organization } from '@core/models/organization.model';
 import { ContextService } from '@core/services/context.service';
 
 export interface ContextSelectorDialogData {
+  /** Solo organizaciones con al menos una orquestación (ver selectableOrganizations). */
   organizations: Organization[];
   /** true cuando el usuario reabre el modal: muestra el botón "Cancelar". */
   dismissible: boolean;
-}
-
-/** Marca error si la organización elegida no tiene orquestaciones. */
-function hasOrchestrations(control: AbstractControl<Organization | null>): ValidationErrors | null {
-  const organization = control.value;
-  return organization && organization.orchestrations.length === 0 ? { noOrchestrations: true } : null;
 }
 
 @Component({
@@ -34,7 +29,7 @@ export class ContextSelectorDialog {
   protected readonly data = inject<ContextSelectorDialogData>(MAT_DIALOG_DATA);
 
   protected readonly form = new FormGroup({
-    organization: new FormControl<Organization | null>(null, [Validators.required, hasOrchestrations]),
+    organization: new FormControl<Organization | null>(null, Validators.required),
     orchestration: new FormControl<Orchestration | null>(null, Validators.required),
   });
 
@@ -44,10 +39,8 @@ export class ContextSelectorDialog {
 
   protected readonly orchestrations = computed(() => this.selectedOrganization()?.orchestrations ?? []);
 
-  /** Solo se muestra el selector si hay más de una opción (o si hay un error que mostrar). */
-  protected readonly showOrganizationSelect = computed(
-    () => this.data.organizations.length > 1 || this.orchestrations().length === 0,
-  );
+  /** Solo se muestra el selector si hay más de una opción (con una sola, se preselecciona). */
+  protected readonly showOrganizationSelect = computed(() => this.data.organizations.length > 1);
   protected readonly showOrchestrationSelect = computed(() => this.orchestrations().length > 1);
 
   /** El backend no envía id: se compara por nombre. */
@@ -94,9 +87,6 @@ export class ContextSelectorDialog {
     const orchestration = organization.orchestrations.find((orch) => orch.name === currentOrchestration?.name);
     if (orchestration) {
       this.form.controls.orchestration.setValue(orchestration);
-    }
-    if (this.form.controls.organization.invalid) {
-      this.form.controls.organization.markAsTouched();
     }
   }
 }

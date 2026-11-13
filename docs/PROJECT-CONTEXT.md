@@ -131,6 +131,7 @@ src/
 └── styles.scss                       # Importa los parciales + estilos base globales
 scripts/ensure-token.mjs              # Crea token.json vacío si no existe (postinstall / prestart)
 proxy.config.json                     # /ui-batch-latam-backend/** → http://localhost:8080
+mock-api/                             # Backend simulado (npm run mock:api): server.mjs + data/*.json
 token.json                            # Token local (NO versionado, en .gitignore)
 ```
 
@@ -149,7 +150,7 @@ token.json                            # Token local (NO versionado, en .gitignor
 - **Selectores**: Organización y luego Orquestación, que solo muestra las orquestaciones de la organización elegida.
   - Un selector solo se muestra si hay más de una opción. Si hay una sola, se autoselecciona.
   - Si hay **una sola organización con una sola orquestación**, el modal se acepta solo sin mostrarse.
-  - Si la organización no tiene orquestaciones, se muestra el error "Esta organización no tiene orquestaciones asociadas."
+  - **Las organizaciones sin orquestaciones no aparecen**: se filtran antes de abrir el modal con `selectableOrganizations()` en `context-selector.service.ts`. La selección automática se evalúa después del filtro.
 - **Validación**: "Aceptar" se habilita solo con ambos campos completos. Los mensajes de error van en español.
 - **Al aceptar**: se llama a `ContextService.setContext(org, orch)`, que todas las pantallas leen.
 - **Reabrir**: el botón 🏢 del header reabre el modal con "Cancelar" y con la selección actual precargada.
@@ -278,10 +279,12 @@ batch_output_result (output_id FK, process_id FK, records_quantity)   -- PK (out
   1. `apiBaseUrlInterceptor` antepone `apiBaseUrl` a las URLs que empiezan con `/`;
   2. `authInterceptor` agrega `Authorization: Bearer` **solo** a las URLs que contienen `/ui-batch-latam-backend/api`, para no enviar el token a MFT ni a otros servicios.
 - **Rutas del API**: en `core/config/api-endpoints.ts`. Agregar ahí cada endpoint nuevo.
+- **Carga inicial**: mientras se obtienen las organizaciones se muestra `LoadingCard` (`shared/components/loading-card`) sobre el mismo fondo del modal. La señal es `ContextSelectorService.loading`.
+- **Backend simulado**: `npm run mock:api` levanta `mock-api/server.mjs` en :8080, con una demora configurable (`MOCK_DELAY_MS`, por defecto 2000) y 401 si falta el token. **Cada endpoint que se integre debe agregarse también al mock** (`ROUTES` + JSON en `mock-api/data/`).
 - **Errores al obtener organizaciones** (`organizationsErrorMessage` en `context-selector.service.ts`). La app muestra el mensaje con un botón "Reintentar":
   - 401/403 → "No autorizado…";
   - status 0 → "No fue posible conectar con el servidor";
-  - lista vacía → "Su usuario no tiene organizaciones asociadas…".
+  - ninguna organización con orquestaciones (o lista vacía) → "Su usuario no tiene organizaciones con orquestaciones asociadas…".
 
 ### 8.1 Handshake con Liferay (se copia de 10490 / 11919, `src/main.ts`)
 La app corre en un iframe de Liferay y **no tiene login propio**. Patrón de 10490:
@@ -353,7 +356,8 @@ La app corre en un iframe de Liferay y **no tiene login propio**. Patrón de 104
 
 ```bash
 npm install                     # también crea token.json vacío si no existe
-# Pega tu token en token.json (entre comillas) y levanta el backend en :8080
+# Pega tu token en token.json (entre comillas) y levanta el backend en :8080,
+# o usa el backend simulado: npm run mock:api (cualquier token sirve, ej. "local")
 npm start                       # http://localhost:4200 (ng serve + proxy a :8080)
 ng test --watch=false           # pruebas (Karma + Chrome)
 ng build                        # build de producción → dist/ui-batch-latam-frontend
@@ -373,6 +377,7 @@ ng build                        # build de producción → dist/ui-batch-latam-f
 
 1. Selección de **2 niveles**: Organización → Orquestación. El concepto "Configuración" de 11919 **no aplica**.
 2. El comportamiento del modal es igual al de 11919: obligatorio al inicio, autoselección y reapertura desde el header.
+   **Excepción**: las organizaciones sin orquestaciones **no se muestran** (pedido del equipo; antes se mostraban con un error, como en 11919).
 3. **Sin campo "Cantidad de registros"** en Nuevo Procesamiento, y sin comparar con el número de líneas del archivo.
 4. Salida solo en FINALIZADO. Ver Obs. en FINALIZADO o CANCELADO, y solo si hubo errores.
 5. PENDIENTE se muestra como "Validación". El cliente ve 4 estados.

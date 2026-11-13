@@ -1,0 +1,30 @@
+[
+  { "name": "CLICSAFEGCP", "orchestrations": [] },
+  { "name": "CLICSAFEQA", "orchestrations": [] },
+  { "name": "CLCMS", "orchestrations": [] },
+  { "name": "CLSAFE", "orchestrations": [] },
+  { "name": "CLSAFEGCP", "orchestrations": [] },
+  { "name": "CLBILLINGSAFE", "orchestrations": [] },
+  {
+    "name": "ECICBANCOGUAYAQUIL",
+    "orchestrations": [{ "name": "bgportafoliobto" }, { "name": "scorenuevaera" }, { "name": "bgnuevaerabto" }]
+  },
+  {
+    "name": "ECICBANCOBOLIVARIANO",
+    "orchestrations": [
+      { "name": "bolivarianoscorecombto" },
+      { "name": "modelobolivariano" },
+      { "name": "icbancobolivariano" },
+      { "name": "expertocolegios" }
+    ]
+  },
+  {
+    "name": "ARICNBSANTAFE",
+    "orchestrations": [
+      { "name": "icnbsantafecomportamiento" },
+      { "name": "icnbsantafenobancarizados" },
+      { "name": "icnbsantafesinhaberes" },
+      { "name": "icnbsantafehaberes" }
+    ]
+  }
+]

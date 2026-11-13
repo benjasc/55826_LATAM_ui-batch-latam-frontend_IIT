@@ -27,6 +27,17 @@ ng build                  # build de producción → dist/ui-batch-latam-fronten
    - Si cambias el token con `npm start` corriendo, la app se recarga sola.
 3. `npm start`.
 
+## Backend simulado (sin el backend real)
+`mock-api/` contiene un servidor Node sin dependencias. Escucha en el puerto 8080 como el backend real y responde con los JSON de `mock-api/data/`.
+
+```bash
+npm run mock:api          # terminal 1: mock en :8080 (2 s de demora para ver la carga)
+npm start                 # terminal 2: la UI
+```
+- **Sin demora**: `$env:MOCK_DELAY_MS=0; npm run mock:api` (PowerShell).
+- **Token**: igual que el backend real, responde 401 si no hay token. En `token.json` sirve cualquier texto, por ejemplo `"local"`.
+- **Endpoints nuevos**: se agregan en `ROUTES` de `mock-api/server.mjs` con su archivo JSON en `mock-api/data/`.
+
 ## Estado
 - **Integrado con el backend**: selección de organización y orquestación (`GET /api/organizations`).
 - **Con datos de prueba**: Pizarra de Trabajo, Nuevo Procesamiento y Buscar Procesos.

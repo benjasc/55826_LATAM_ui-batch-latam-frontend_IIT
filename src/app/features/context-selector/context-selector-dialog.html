@@ -13,9 +13,6 @@
         @if (form.controls.organization.hasError('required')) {
           <mat-error>Debe seleccionar una organización.</mat-error>
         }
-        @if (form.controls.organization.hasError('noOrchestrations')) {
-          <mat-error>Esta organización no tiene orquestaciones asociadas.</mat-error>
-        }
       </mat-form-field>
     }
 

@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -11,11 +12,12 @@ import { App } from './app';
 
 describe('App', () => {
   let open: jasmine.Spy;
+  const loading = signal(false);
 
   function render() {
     TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([]), { provide: ContextSelectorService, useValue: { open } }],
+      providers: [provideRouter([]), { provide: ContextSelectorService, useValue: { open, loading } }],
     });
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
@@ -44,7 +46,18 @@ describe('App', () => {
   it('si el usuario no tiene organizaciones lo informa', () => {
     open = jasmine.createSpy('open').and.returnValue(throwError(() => new NoOrganizationsError()));
     const { el } = render();
-    expect(el.textContent).toContain('no tiene organizaciones asociadas');
+    expect(el.textContent).toContain('no tiene organizaciones con orquestaciones asociadas');
+  });
+
+  it('mientras se obtienen las organizaciones muestra la tarjeta de carga', () => {
+    open = jasmine.createSpy('open').and.returnValue(of(true));
+    loading.set(true);
+    const { fixture, el } = render();
+    expect(el.textContent).toContain('Cargando sus organizaciones…');
+
+    loading.set(false);
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('Cargando sus organizaciones…');
   });
 
   it('si no hay conexión con el backend lo informa', () => {
