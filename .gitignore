@@ -1,0 +1,66 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Dependencies
+/node_modules
+
+# Angular cache (se regenera con ng serve / ng build / ng test)
+/.angular
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Secrets / configuración local (NUNCA versionar)
+token.json
+.env
+.env.*
+# env.js se genera en el contenedor a partir de env.template.js
+src/assets/env/env.js
+
+# Tests y calidad (Karma / Jest / Sonar)
+/coverage
+test-report.xml
+.scannerwork/
+testem.log
+/libpeerconnection.log
+__screenshots__/
+
+# Profiling
+chrome-profiler-events*.json
+speed-measure-plugin*.json
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+/.metadata
+
+# Visual Studio Code (se comparten solo las configuraciones del equipo)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+.sass-cache/
+/connect.lock
+/typings
+*.zip
+
+# System files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,61 @@
+@use '@angular/material' as mat;
+@use './theme-colors' as colors;
+@use './palette' as p;
+
+html {
+  // Tema Material 3 generado a partir de los colores Equifax (ver _theme-colors.scss).
+  @include mat.theme(
+    (
+      color: (
+        primary: colors.$primary-palette,
+        tertiary: colors.$tertiary-palette,
+        theme-type: light,
+      ),
+      typography: 'Open Sans',
+      density: 0,
+    )
+  );
+
+  // Fija el rojo exacto de Equifax y superficies neutras (grises, no rosadas).
+  @include mat.theme-overrides(
+    (
+      primary: p.$brand-red,
+      on-primary: #ffffff,
+      surface: #ffffff,
+      on-surface: p.$text-color,
+      surface-container: #ffffff,
+      surface-container-low: #ffffff,
+      surface-container-high: #ffffff,
+      surface-container-highest: #f5f6f7,
+      surface-variant: #f5f6f7,
+      on-surface-variant: p.$brand-gray,
+      outline: #9aa0a6,
+      outline-variant: p.$border-color,
+    )
+  );
+
+  // Botones rectangulares como en la UI anterior; deshabilitado en rojo translúcido.
+  @include mat.button-overrides(
+    (
+      filled-container-shape: 4px,
+      outlined-container-shape: 4px,
+      text-container-shape: 4px,
+      filled-disabled-container-color: p.$brand-red-disabled,
+      filled-disabled-label-text-color: #ffffff,
+    )
+  );
+
+  // Campos solo con línea inferior, sin fondo (como en la UI anterior).
+  @include mat.form-field-overrides(
+    (
+      filled-container-color: transparent,
+      filled-disabled-container-color: transparent,
+    )
+  );
+
+  @include mat.dialog-overrides(
+    (
+      container-shape: 8px,
+    )
+  );
+}

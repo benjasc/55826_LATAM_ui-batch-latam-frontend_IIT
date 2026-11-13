@@ -1,0 +1,140 @@
+<h1 class="page-title">Buscar Procesos</h1>
+
+<mat-expansion-panel expanded class="filters-panel">
+  <mat-expansion-panel-header class="panel-header">
+    <mat-panel-title>Consulta de Archivos Procesados</mat-panel-title>
+  </mat-expansion-panel-header>
+
+  <form [formGroup]="form" (ngSubmit)="search()">
+    <p class="hint">Sólo se permite realizar búsquedas dentro de un rango de {{ maxRangeDays }} días.*</p>
+
+    <div class="row g-3">
+      <div class="col-12 col-md-4">
+        <mat-form-field>
+          <mat-label>Inicio</mat-label>
+          <input
+            matInput
+            formControlName="startDate"
+            placeholder="dd/mm/aaaa"
+            [matDatepicker]="startPicker"
+            [max]="form.controls.endDate.value ?? today"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
+          <mat-datepicker #startPicker />
+          @if (form.controls.startDate.hasError('required')) {
+            <mat-error>Debe ingresar la fecha de inicio.</mat-error>
+          } @else if (form.controls.startDate.hasError('matDatepickerParse')) {
+            <mat-error>Fecha inválida (dd/mm/aaaa).</mat-error>
+          } @else if (form.controls.startDate.hasError('matDatepickerMax')) {
+            <mat-error>Inicio no puede ser mayor a Término ni una fecha futura.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <mat-form-field>
+          <mat-label>Término</mat-label>
+          <input
+            matInput
+            formControlName="endDate"
+            placeholder="dd/mm/aaaa"
+            [matDatepicker]="endPicker"
+            [min]="form.controls.startDate.value"
+            [max]="today"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
+          <mat-datepicker #endPicker />
+          @if (form.controls.endDate.hasError('required')) {
+            <mat-error>Debe ingresar la fecha de término.</mat-error>
+          } @else if (form.controls.endDate.hasError('matDatepickerParse')) {
+            <mat-error>Fecha inválida (dd/mm/aaaa).</mat-error>
+          } @else if (form.controls.endDate.hasError('matDatepickerMin')) {
+            <mat-error>Término no puede ser menor a Inicio.</mat-error>
+          } @else if (form.controls.endDate.hasError('matDatepickerMax')) {
+            <mat-error>No puede ingresar una fecha futura.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      @if (isAdmin()) {
+        <div class="col-12 col-md-4">
+          <mat-form-field>
+            <mat-label>Usuario</mat-label>
+            <mat-select formControlName="userId">
+              @for (user of users.value(); track user.id) {
+                <mat-option [value]="user.id">{{ user.name }} ({{ user.userId }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+    </div>
+
+    @if (form.hasError('rangeTooLong')) {
+      <p class="form-error" role="alert">El rango de fechas no puede superar los {{ maxRangeDays }} días.</p>
+    }
+
+    <div class="actions">
+      <button mat-flat-button type="submit" [disabled]="form.invalid || results.isLoading()">Buscar</button>
+      <button mat-flat-button type="button" class="btn-neutral" (click)="clear()">Limpiar</button>
+    </div>
+  </form>
+</mat-expansion-panel>
+
+<section class="results">
+  <h2 class="page-title">Lista de Archivos Procesados</h2>
+
+  @if (results.isLoading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (results.error()) {
+    <p class="state state--error">Ha ocurrido un problema al realizar la búsqueda. Intente nuevamente.</p>
+  } @else {
+    <div class="table-wrapper">
+      <table mat-table [dataSource]="dataSource">
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef>No.</th>
+          <td mat-cell *matCellDef="let row">{{ row.number }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="fileName">
+          <th mat-header-cell *matHeaderCellDef>Nombre del Archivo</th>
+          <td mat-cell *matCellDef="let row">{{ row.fileName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="processDate">
+          <th mat-header-cell *matHeaderCellDef>Fecha del Procesamiento</th>
+          <td mat-cell *matCellDef="let row">{{ row.processDate | date: 'dd-MM-yyyy' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado de Procesamiento</th>
+          <td mat-cell *matCellDef="let row"><app-status-badge [status]="row.status" /></td>
+        </ng-container>
+
+        <ng-container matColumnDef="recordsQuantity">
+          <th mat-header-cell *matHeaderCellDef>Cantidad de Registros</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.recordsQuantity === null ? '--' : (row.recordsQuantity | number: '1.0-0') }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="state" [attr.colspan]="displayedColumns.length">
+            @if (!searched()) {
+              Seleccione un rango de fechas y presione Buscar.
+            } @else if (!results.isLoading()) {
+              No se encontraron procesos en el rango seleccionado.
+            }
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator [pageSizeOptions]="pageSizeOptions" [pageSize]="15" showFirstLastButtons />
+  }
+</section>

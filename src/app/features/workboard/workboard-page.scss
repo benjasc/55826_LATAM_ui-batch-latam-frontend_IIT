@@ -1,0 +1,68 @@
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--brand-gray-dark);
+
+  h1 {
+    margin: 0;
+    font: var(--mat-sys-headline-small);
+  }
+}
+
+.new-process {
+  min-width: 20rem;
+  margin-bottom: 1.25rem;
+}
+
+.processes-panel {
+  --mat-expansion-header-text-color: var(--brand-gray-dark);
+
+  .panel-header,
+  .panel-header:hover {
+    background: #e2e2e2 !important;
+  }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+th.mat-mdc-header-cell {
+  font-weight: 700;
+  color: var(--brand-gray-dark);
+  white-space: nowrap;
+}
+
+.file-name {
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-action {
+  min-width: 7rem;
+  height: 2rem;
+  font-size: 0.8rem;
+}
+
+.state {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--brand-gray);
+
+  &--error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--brand-red);
+  }
+}

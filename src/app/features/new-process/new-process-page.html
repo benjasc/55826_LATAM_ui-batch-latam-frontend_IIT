@@ -1,0 +1,60 @@
+<section class="card">
+  <h1 class="page-title">Nuevo Procesamiento</h1>
+
+  <div class="upload">
+    <p class="upload-label">Ingrese archivo en formato csv:</p>
+
+    <div class="file-row">
+      <!-- Input nativo oculto: se abre con el botón "Seleccionar archivo" -->
+      <input #fileInput type="file" accept=".csv" hidden (change)="onFileSelected($event)" />
+
+      <div class="file-box" [class.file-box--error]="fileError()">
+        <button mat-stroked-button type="button" (click)="openFilePicker()" [disabled]="uploading()">
+          <mat-icon>upload_file</mat-icon>
+          Seleccionar archivo
+        </button>
+        <span class="file-name">
+          @if (file(); as selected) {
+            {{ selected.name }} <span class="file-size">({{ fileSize() }})</span>
+          } @else {
+            Ningún archivo seleccionado
+          }
+        </span>
+      </div>
+
+      <button
+        mat-flat-button
+        class="btn-delete"
+        type="button"
+        matTooltip="Eliminar archivo"
+        aria-label="Eliminar archivo"
+        [disabled]="!file() || uploading()"
+        (click)="removeFile()"
+      >
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+
+    @if (fileError(); as error) {
+      <p class="file-error" role="alert">{{ error }}</p>
+    }
+
+    <ul class="requirements">
+      @for (requirement of requirements; track requirement) {
+        <li>{{ requirement }}</li>
+      }
+    </ul>
+
+    @if (uploading()) {
+      <div class="uploading">
+        <p>Cargando archivo…</p>
+        <mat-progress-bar mode="indeterminate" />
+      </div>
+    }
+  </div>
+
+  <footer class="actions">
+    <a mat-flat-button routerLink="/workboard" [class.disabled-link]="uploading()">Regresar</a>
+    <button mat-flat-button type="button" [disabled]="!canFinish()" (click)="finish()">Finalizar</button>
+  </footer>
+</section>

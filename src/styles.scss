@@ -1,0 +1,52 @@
+// Punto de entrada de estilos globales: solo importa los parciales de src/styles.
+// Bootstrap (solo grid + utilidades) se carga como CSS desde angular.json.
+@use './styles/palette';
+@use './styles/theme';
+
+// El padding y el borde se incluyen en el ancho (Bootstrap reboot lo hacía; aquí no lo cargamos).
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color-scheme: light;
+  background-color: var(--page-background);
+  color: var(--text-color);
+  font: var(--mat-sys-body-medium);
+  font-family: 'Open Sans', 'Segoe UI', Tahoma, sans-serif;
+}
+
+// Botón secundario/neutral (Cancelar, Limpiar): <button mat-flat-button class="btn-neutral">
+.mat-mdc-unelevated-button.btn-neutral:not(:disabled) {
+  background-color: var(--neutral-button);
+  color: #ffffff;
+}
+
+// Título de página con línea inferior (como "Pizarra de Trabajo" en la UI anterior).
+.page-title {
+  margin: 0 0 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--brand-gray-dark);
+  font: var(--mat-sys-headline-small);
+}
+
+// Avisos (NotificationService)
+.snack-success {
+  --mat-snack-bar-container-color: #2e6b1f;
+  --mat-snack-bar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}
+
+.snack-error {
+  --mat-snack-bar-container-color: var(--brand-red);
+  --mat-snack-bar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}

@@ -1,0 +1,43 @@
+<h2 mat-dialog-title>¿Cuál configuración desea utilizar?</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="context-form" (ngSubmit)="accept()" id="context-form">
+    @if (showOrganizationSelect()) {
+      <mat-form-field>
+        <mat-label>Organización</mat-label>
+        <mat-select formControlName="organization" [compareWith]="compareById">
+          @for (organization of data.organizations; track organization.id) {
+            <mat-option [value]="organization">{{ organization.name }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.organization.hasError('required')) {
+          <mat-error>Debe seleccionar una organización.</mat-error>
+        }
+        @if (form.controls.organization.hasError('noOrchestrations')) {
+          <mat-error>Esta organización no tiene orquestaciones asociadas.</mat-error>
+        }
+      </mat-form-field>
+    }
+
+    @if (showOrchestrationSelect()) {
+      <mat-form-field>
+        <mat-label>Orquestación</mat-label>
+        <mat-select formControlName="orchestration" [compareWith]="compareById">
+          @for (orchestration of orchestrations(); track orchestration.id) {
+            <mat-option [value]="orchestration">{{ orchestration.name }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.orchestration.hasError('required')) {
+          <mat-error>Debe seleccionar una orquestación.</mat-error>
+        }
+      </mat-form-field>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  @if (data.dismissible) {
+    <button mat-stroked-button type="button" (click)="cancel()">Cancelar</button>
+  }
+  <button mat-flat-button type="submit" form="context-form" [disabled]="form.invalid">Aceptar</button>
+</mat-dialog-actions>

@@ -1,0 +1,99 @@
+.card {
+  padding: 1.5rem;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.upload {
+  max-width: 50rem;
+  margin: 0 auto;
+}
+
+.upload-label {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.file-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.file-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+
+  &--error {
+    border-color: var(--brand-red);
+  }
+}
+
+.file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--brand-gray-dark);
+}
+
+.file-size {
+  color: var(--brand-gray);
+  font-size: 0.85rem;
+}
+
+.btn-delete {
+  min-width: 3.5rem;
+  height: auto;
+
+  mat-icon {
+    margin: 0;
+  }
+}
+
+.file-error {
+  margin: 0.5rem 0 0;
+  color: var(--brand-red);
+  font-size: 0.85rem;
+}
+
+.requirements {
+  width: fit-content;
+  margin: 1.5rem auto 0;
+  padding-left: 1.25rem;
+  color: var(--brand-gray);
+  font-size: 0.9rem;
+
+  li + li {
+    margin-top: 0.25rem;
+  }
+}
+
+.uploading {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--brand-gray-dark);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+
+  > * {
+    min-width: 16rem;
+  }
+}
+
+.disabled-link {
+  pointer-events: none;
+  opacity: 0.5;
+}

@@ -1,0 +1,8 @@
+<app-header />
+
+<main class="content container-fluid">
+  <!-- Las pantallas solo se muestran cuando ya hay organización y orquestación elegidas -->
+  @if (context.hasContext()) {
+    <router-outlet />
+  }
+</main>

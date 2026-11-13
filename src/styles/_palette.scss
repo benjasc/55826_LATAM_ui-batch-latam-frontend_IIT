@@ -1,0 +1,24 @@
+// Colores corporativos Equifax (mismos que 11919 / 10490).
+$brand-red: #981e32;
+$brand-red-dark: #851626;
+$brand-red-disabled: rgba(152, 30, 50, 0.44);
+$brand-gray: #4d545a;
+$brand-gray-dark: #25292e;
+$brand-orange: #ffa900;
+$neutral-button: #9d9d9d;
+$page-background: #f2f3f4;
+$border-color: #dcdfe2;
+$text-color: #333e48;
+
+// Expuestos como variables CSS para usarlos en cualquier componente: var(--brand-red)
+:root {
+  --brand-red: #{$brand-red};
+  --brand-red-dark: #{$brand-red-dark};
+  --brand-gray: #{$brand-gray};
+  --brand-gray-dark: #{$brand-gray-dark};
+  --brand-orange: #{$brand-orange};
+  --neutral-button: #{$neutral-button};
+  --page-background: #{$page-background};
+  --border-color: #{$border-color};
+  --text-color: #{$text-color};
+}

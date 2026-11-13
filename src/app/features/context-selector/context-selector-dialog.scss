@@ -1,0 +1,19 @@
+.context-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+mat-dialog-actions {
+  display: flex;
+  gap: 0.75rem;
+
+  button {
+    flex: 1;
+  }
+}

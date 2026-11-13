@@ -1,0 +1,27 @@
+<mat-toolbar class="header">
+  <a class="brand" routerLink="/workboard">
+    <span class="brand-mark">BM</span>
+    <span class="brand-name">Batch Management LATAM</span>
+  </a>
+
+  @if (context.hasContext()) {
+    <nav class="nav">
+      @for (item of navItems; track item.path) {
+        <a mat-button [routerLink]="item.path" routerLinkActive="active">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <span class="spacer"></span>
+
+    <div class="context">
+      <span class="context-org">{{ context.organization()?.name }}</span>
+      <span class="context-orch">{{ context.orchestration()?.name }}</span>
+    </div>
+    <button mat-icon-button matTooltip="Cambiar organización / orquestación" (click)="changeContext()">
+      <mat-icon>corporate_fare</mat-icon>
+    </button>
+  }
+</mat-toolbar>

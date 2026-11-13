@@ -1,0 +1,10 @@
+.error {
+  max-width: 32rem;
+  margin: 4rem auto;
+  text-align: center;
+
+  h1 {
+    color: var(--brand-red);
+    font: var(--mat-sys-headline-medium);
+  }
+}
