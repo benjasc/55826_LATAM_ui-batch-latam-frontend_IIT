@@ -60,7 +60,7 @@ export class SearchPage {
   protected readonly maxRangeDays = MAX_RANGE_DAYS;
   protected readonly today = new Date();
   protected readonly isAdmin = this.userService.isAdmin;
-  protected readonly displayedColumns = ['number', 'fileName', 'processDate', 'status', 'recordsQuantity'];
+  protected readonly displayedColumns = ['number', 'fileName', 'createdAt', 'status', 'recordsQuantity'];
   protected readonly pageSizeOptions = [15, 30, 50];
 
   protected readonly form = new FormGroup(
@@ -99,7 +99,7 @@ export class SearchPage {
   protected readonly rows = computed<SearchRow[]>(() => {
     const list = this.results.hasValue() ? this.results.value() : [];
     return [...list]
-      .sort((a, b) => a.processDate.localeCompare(b.processDate))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
       .map((process, index) => ({ ...process, number: index + 1 }));
   });
 

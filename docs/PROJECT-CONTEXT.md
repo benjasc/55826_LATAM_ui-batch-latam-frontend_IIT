@@ -46,19 +46,19 @@
 | Tema Equifax (rojo `#981e32`) y estructura de carpetas | ✅ Hecho |
 | Modal de selección Organización → Orquestación | ✅ Hecho, **conectado al API real** (`GET /api/organizations`) |
 | Header con navegación y cambio de contexto | ✅ Hecho |
-| Pizarra de Trabajo | ✅ Hecho (datos de prueba) |
-| Nuevo Procesamiento (carga de CSV) | ✅ Hecho (subida simulada) |
+| Pizarra de Trabajo | ✅ Hecho, **conectada al API real** (`GET /api/listall`). Las descargas siguen simuladas. |
+| Nuevo Procesamiento | ✅ Hecho, **conectado al API real** (`POST /api/batch-processes`). La subida del archivo a MFT es un paso posterior. |
 | Buscar Procesos (con selector de usuario para administradores) | ✅ Hecho (datos de prueba) |
 | Páginas de error 403, 500 y no encontrada | ✅ Hecho |
 | Pruebas unitarias (Karma/Jasmine): 36 en verde | ✅ Hecho |
 | Configuración de ejecución (`APP_CONFIG`), token local (`token.json`), proxy e interceptores de URL base y auth | ✅ Hecho |
 | **Handshake con Liferay (token + dominio)** | ❌ Pendiente (stub en `load-app-config.ts`) |
-| **Integración HTTP del resto de pantallas (Pizarra, Nuevo Procesamiento, Buscar)** | ❌ Pendiente (siguen con datos de prueba) |
+| **Integración HTTP de Buscar Procesos y descargas (Salida / Ver Obs.)** | ❌ Pendiente (siguen con datos de prueba) |
 | **Subida real a MFT y descargas reales** | ❌ Pendiente |
 | Interceptores de errores globales y correlation id, guard de roles | ❌ Pendiente |
 | Jest, ESLint, Dockerfile, nginx, `env.js` y Jenkins | ❌ Pendiente |
 
-**Solo las organizaciones vienen del backend.** Los demás datos son de prueba (mocks en memoria). Cada punto que hay que reemplazar está marcado con `// TODO:` en el código.
+**Organizaciones, listado y creación de procesos vienen del backend.** Buscar Procesos y las descargas son de prueba (mocks en memoria). Cada punto que hay que reemplazar está marcado con `// TODO:` en el código.
 
 ---
 
@@ -99,12 +99,12 @@ src/
 │   │   │   └── spanish-paginator-intl.ts   # "Registros por página", "1 – 15 de 23"
 │   │   ├── models/
 │   │   │   ├── organization.model.ts       # Organization, Orchestration
-│   │   │   ├── batch-process.model.ts      # BatchProcess, ProcessStatus, reglas de descarga, ProcessSearchCriteria
+│   │   │   ├── batch-process.model.ts      # BatchProcess + BatchProcessDto + toBatchProcess(), ProcessStatus, reglas de descarga
 │   │   │   └── user.model.ts               # User, CurrentUser, Role
 │   │   └── services/
 │   │       ├── context.service.ts          # Organización + orquestación activas (signals)
 │   │       ├── organization.service.ts     # HTTP: GET /api/organizations
-│   │       ├── batch-process.service.ts    # MOCK: listar, buscar, crear proceso, descargas
+│   │       ├── batch-process.service.ts    # HTTP: listar (listall) y crear (batch-processes). MOCK: buscar y descargas
 │   │       ├── user.service.ts             # MOCK: usuario actual, isAdmin, usuarios de la org
 │   │       └── notification.service.ts     # Avisos (MatSnackBar) de éxito y error
 │   ├── layout/header/                # Header: marca, navegación, contexto, botón 🏢
@@ -114,7 +114,7 @@ src/
 │   ├── features/                     # Una carpeta por pantalla
 │   │   ├── context-selector/         # Modal Organización → Orquestación + servicio que lo abre
 │   │   ├── workboard/                # Pizarra de Trabajo
-│   │   ├── new-process/              # Nuevo Procesamiento + csv-file.validator.ts
+│   │   ├── new-process/              # Nuevo Procesamiento + csv-file.validator.ts + count-csv-records.ts
 │   │   ├── search/                   # Buscar Procesos + date-range.validator.ts
 │   │   └── error/                    # 403 / 500 / no encontrada
 │   ├── app.config.ts                 # Providers globales
@@ -160,12 +160,14 @@ token.json                            # Token local (NO versionado, en .gitignor
 `features/workboard/`
 
 - **Botones**: "Actualizar" recarga la lista y "Nuevo Procesamiento" navega a `/new-process`.
-- **Tabla** dentro del panel "Lista de Archivos Procesados", con las columnas No., Nombre del Archivo, Cantidad de Registros, Fecha del Procesamiento (`yyyy-MM-dd HH:mm:ss`), Estado, Salida y Ver Obs.
-- **Contenido**: solo los procesos **del usuario actual** en la organización y orquestación activas, los más recientes primero. El No. más alto es el más reciente.
-- **Cantidad de registros**: `null` se muestra como `--`. El usuario ya no la ingresa; la completa el backend.
-- **Botones por fila** (reglas en `batch-process.model.ts`):
-  - **Salida** se habilita solo si el estado es FINALIZADO (`canDownloadOutput`) y descarga el CSV procesado.
-  - **Ver Obs.** se habilita si el proceso está FINALIZADO o CANCELADO **y** `observationsQuantity > 0` (`canDownloadObservations`). Descarga un TXT con los registros erróneos.
+- **Tabla** dentro del panel "Lista de Archivos Procesados", con las columnas No., Nombre del Archivo, Cantidad de Registros, Fecha del Procesamiento (`createdAt`, `yyyy-MM-dd HH:mm:ss`), Estado, Salida y Ver Obs.
+- **Datos**: `GET /api/listall` con los headers `organization` y `orchestration`. El backend devuelve solo los procesos del usuario del token.
+- **Orden**: los más recientes primero. El No. más alto es el más reciente.
+- **Cantidad de registros**: `null` se muestra como `--`.
+- **Botones por fila** (reglas en `batch-process.model.ts`). **Mandan los flags del backend**:
+  - **Salida** se habilita si `hasSuccess === true` (`canDownloadOutput`). El archivo es `successFilename`.
+  - **Ver Obs.** se habilita si `hasErrors === true` (`canDownloadObservations`). El archivo es `errorFilename`.
+  - La descarga en sí **sigue simulada**, porque aún no hay endpoint, pero ya usa el nombre real del archivo.
 - **Paginación**: 15, 30 o 50 por página.
 - **Estados especiales**: barra de carga mientras se consulta, mensaje de error con "Reintentar" y la fila "No hay procesos registrados." cuando no hay datos.
 - **Recarga**: la lista se recarga sola al cambiar de organización u orquestación.
@@ -180,12 +182,18 @@ token.json                            # Token local (NO versionado, en .gitignor
   - el archivo no puede estar vacío (0 bytes);
   - el máximo es 400 MB.
 - **Error**: si el archivo es inválido se muestra un mensaje en rojo y el archivo no queda seleccionado.
-- **Cantidad de registros**: **no existe este campo**. El usuario decidió quitarlo; la cantidad la informa el backend.
+- **Cantidad de registros**: no hay campo para escribirla. **La UI la cuenta** al elegir el archivo (`count-csv-records.ts`):
+  - **todas** las filas cuentan, porque el CSV no tiene encabezado;
+  - se ignoran las líneas vacías;
+  - el archivo se lee por stream, así que funciona hasta con 400 MB;
+  - se muestra junto al nombre, por ejemplo "(27 bytes · 2 registros)";
+  - un CSV sin filas con contenido se rechaza como vacío.
 - **Botones**: "Regresar" vuelve a `/workboard`. "Finalizar" se habilita solo con un archivo válido.
 - **Al finalizar**:
-  1. Se muestra "Cargando archivo…" con todos los botones bloqueados.
-  2. Si sale bien, aparece el aviso verde "El archivo se ha cargado con éxito.", se navega a `/workboard` y el proceso queda primero con estado Validación.
-  3. Si falla, aparece un aviso rojo y el usuario se queda en la pantalla.
+  1. Se llama a `POST /api/batch-processes` con `{ filename, recordsQuantity }` y los headers `organization`/`orchestration`. Mientras tanto se muestra "Creando proceso…" con todos los botones bloqueados.
+  2. Si sale bien, aparece el aviso verde "El proceso se ha creado con éxito.", se navega a `/workboard` y el proceso queda primero con estado Validación (PENDIENTE).
+  3. **Por ahora no se sube el contenido del archivo**: solo se registran el nombre y la cantidad. La subida a MFT vendrá en otro paso.
+  4. Si falla, aparece un aviso rojo y el usuario se queda en la pantalla.
 
 ### 5.4 Buscar Procesos (`/search`)
 `features/search/`
@@ -252,9 +260,9 @@ batch_output_result (output_id FK, process_id FK, records_quantity)   -- PK (out
 | ~~`OrganizationService`~~ | ~~`getOrganizations()`~~ | ✅ **Ya usa el API real**: `GET /ui-batch-latam-backend/api/organizations` | — |
 | `UserService` | `currentUser` (signal) | "Usuario Demo" (id 1), admin si `environment.mockAdmin` | Usuario y roles desde el backend o el token |
 | `UserService` | `getOrganizationUsers(organization)` | 3 usuarios | GET de usuarios de la organización (solo para admin) |
-| `BatchProcessService` | `getProcesses(organization, orchestration, userId)` | Lista por organización/orquestación (de 5 a 34 procesos, según el nombre) | GET de procesos del usuario |
-| `BatchProcessService` | `searchProcesses(criteria)` | Filtra por usuario y rango de fechas | POST/GET de búsqueda |
-| `BatchProcessService` | `createProcess(organization, orchestration, userId, file)` | Guarda en memoria con estado PENDIENTE | Subida a MFT + registro del proceso |
+| ~~`BatchProcessService`~~ | ~~`getProcesses(organization, orchestration)`~~ | ✅ **Ya usa el API real**: `GET /api/listall` | — |
+| `BatchProcessService` | `searchProcesses(criteria)` | Genera procesos de prueba y filtra por usuario y rango de fechas | Endpoint de búsqueda (pendiente) |
+| ~~`BatchProcessService`~~ | ~~`createProcess(organization, orchestration, fileName, recordsQuantity)`~~ | ✅ **Ya usa el API real**: `POST /api/batch-processes`. Falta la subida a MFT (otro paso). | — |
 | `BatchProcessService` | `downloadOutput` / `downloadObservations` | Blob CSV/TXT de ejemplo | Descarga real (backend/MFT) |
 
 - **Persistencia de los mocks**: guardan los datos en memoria (`mockStore`) y se pierden al recargar la página.
@@ -314,6 +322,12 @@ La app corre en un iframe de Liferay y **no tiene login propio**. Patrón de 104
 | Uso | Método + ruta | Estado |
 |---|---|---|
 | Organizaciones del usuario con sus orquestaciones | `GET /ui-batch-latam-backend/api/organizations` → `[{ name, orchestrations: [{ name }] }]` | ✅ Integrado (`OrganizationService`) |
+| Procesos del usuario del token | `GET /ui-batch-latam-backend/api/listall` (headers `organization`, `orchestration`) → `[{ id, fileName, recordsQuantity, createdAt, statusCode, status, hasSuccess, successFilename, hasErrors, errorFilename, ... }]` | ✅ Integrado (`BatchProcessService.getProcesses`) |
+| Crear proceso | `POST /ui-batch-latam-backend/api/batch-processes` (headers `organization`, `orchestration`), body `{ filename, recordsQuantity }` → `{ id, fileName, recordsQuantity, statusCode, status, organization, orchestration }` | ✅ Integrado (`BatchProcessService.createProcess`) |
+
+**Headers de contexto**: los endpoints de procesos requieren `organization` y `orchestration`. Cada método de `BatchProcessService` los envía de forma explícita con `contextHeaders()`.
+
+**Mapeo de la respuesta**: se hace con `toBatchProcess()` en `batch-process.model.ts`. El estado sale de `statusCode` (001–005); un código desconocido se muestra como "Desconocido".
 
 **Endpoints de la UI anterior (11919)**: sirven solo como referencia del backend antiguo (`/ui-batch-ic-backend`). Confirmar los equivalentes con el equipo de backend.
 
@@ -378,8 +392,8 @@ ng build                        # build de producción → dist/ui-batch-latam-f
 1. Selección de **2 niveles**: Organización → Orquestación. El concepto "Configuración" de 11919 **no aplica**.
 2. El comportamiento del modal es igual al de 11919: obligatorio al inicio, autoselección y reapertura desde el header.
    **Excepción**: las organizaciones sin orquestaciones **no se muestran** (pedido del equipo; antes se mostraban con un error, como en 11919).
-3. **Sin campo "Cantidad de registros"** en Nuevo Procesamiento, y sin comparar con el número de líneas del archivo.
-4. Salida solo en FINALIZADO. Ver Obs. en FINALIZADO o CANCELADO, y solo si hubo errores.
+3. **Sin campo "Cantidad de registros"** en Nuevo Procesamiento: **la UI cuenta las filas del CSV** (todas cuentan, porque no hay encabezado) y las envía como `recordsQuantity`.
+4. Salida y Ver Obs. se habilitan según `hasSuccess` / `hasErrors` del backend.
 5. PENDIENTE se muestra como "Validación". El cliente ve 4 estados.
 6. Buscar Procesos mantiene el **selector de usuario para administradores**.
 7. Rango máximo de búsqueda: **30 días**, según `EX UI.docx`. 11919 usaba 365.

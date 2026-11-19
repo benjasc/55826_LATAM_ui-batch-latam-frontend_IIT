@@ -15,7 +15,15 @@
         </button>
         <span class="file-name">
           @if (file(); as selected) {
-            {{ selected.name }} <span class="file-size">({{ fileSize() }})</span>
+            {{ selected.name }}
+            <span class="file-size">
+              ({{ fileSize() }}
+              @if (counting()) {
+                · contando registros…
+              } @else if (recordsQuantity() !== null) {
+                · {{ recordsQuantity() | number }} {{ recordsQuantity() === 1 ? 'registro' : 'registros' }}
+              })
+            </span>
           } @else {
             Ningún archivo seleccionado
           }
@@ -47,7 +55,7 @@
 
     @if (uploading()) {
       <div class="uploading">
-        <p>Cargando archivo…</p>
+        <p>Creando proceso…</p>
         <mat-progress-bar mode="indeterminate" />
       </div>
     }

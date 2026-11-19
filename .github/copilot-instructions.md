@@ -52,7 +52,9 @@ Este repo contiene **UI Batch LATAM** (Equifax), una SPA en Angular 20 que corre
 - **Endpoints nuevos**: agregarlos en `core/config/api-endpoints.ts` (`API.*`) y llamarlos con rutas **relativas**:
   - `apiBaseUrlInterceptor` antepone el dominio;
   - `authInterceptor` agrega el token.
-- **Mock**: cada endpoint integrado se agrega también al backend simulado (`mock-api/server.mjs` → `ROUTES` + JSON en `mock-api/data/`).
+- **Mock**: cada endpoint integrado se agrega también al backend simulado (`mock-api/server.mjs` → `ROUTES` + datos en `mock-api/data/`).
+- **Headers de contexto**: los endpoints de procesos requieren `organization` y `orchestration`. Se envían con `contextHeaders()` en el servicio.
+- **DTO**: cada respuesta del backend tiene su `*Dto` y una función `to*()` que la convierte al modelo del front. Las pantallas nunca usan DTOs.
 - No escribir hosts de backend a mano.
 - **Identificadores**: el API usa el **nombre** de la organización y la orquestación (no hay `id`).
 - **Token local**: `token.json` en la raíz, en `.gitignore`. No versionar tokens ni credenciales.

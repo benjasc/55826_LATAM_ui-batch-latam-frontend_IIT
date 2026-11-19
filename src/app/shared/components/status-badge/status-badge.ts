@@ -12,6 +12,11 @@ import { ProcessStatus, STATUS_LABEL, VISIBLE_STATUS } from '@core/models/batch-
 export class StatusBadge {
   readonly status = input.required<ProcessStatus>();
 
-  protected readonly visible = computed(() => VISIBLE_STATUS[this.status()]);
-  protected readonly label = computed(() => STATUS_LABEL[this.visible()]);
+  /** Si el backend envía un código desconocido se muestra "Desconocido" en gris. */
+  private readonly known = computed(() => VISIBLE_STATUS[this.status()] ?? null);
+  protected readonly visible = computed(() => this.known() ?? 'validation');
+  protected readonly label = computed(() => {
+    const known = this.known();
+    return known ? STATUS_LABEL[known] : 'Desconocido';
+  });
 }

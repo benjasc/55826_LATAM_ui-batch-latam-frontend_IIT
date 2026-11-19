@@ -36,11 +36,17 @@ npm start                 # terminal 2: la UI
 ```
 - **Sin demora**: `$env:MOCK_DELAY_MS=0; npm run mock:api` (PowerShell).
 - **Token**: igual que el backend real, responde 401 si no hay token. En `token.json` sirve cualquier texto, por ejemplo `"local"`.
-- **Endpoints nuevos**: se agregan en `ROUTES` de `mock-api/server.mjs` con su archivo JSON en `mock-api/data/`.
+- **Endpoints simulados**: `organizations`, `listall` y `batch-processes`.
+  - Los procesos creados se guardan en memoria mientras el mock esté corriendo.
+  - Los datos iniciales están en `mock-api/data/batch-processes.json`. Para ver datos, elige ECICBANCOBOLIVARIANO → modelobolivariano.
+- **Endpoints nuevos**: se agregan en `ROUTES` de `mock-api/server.mjs`.
 
 ## Estado
-- **Integrado con el backend**: selección de organización y orquestación (`GET /api/organizations`).
-- **Con datos de prueba**: Pizarra de Trabajo, Nuevo Procesamiento y Buscar Procesos.
+- **Integrado con el backend**:
+  - selección de organización y orquestación (`GET /api/organizations`);
+  - Pizarra de Trabajo (`GET /api/listall`);
+  - creación de procesos (`POST /api/batch-processes`).
+- **Con datos de prueba**: Buscar Procesos y las descargas de Salida / Ver Obs.
 - **Pendiente**:
   - handshake con Liferay;
   - integración HTTP del resto de las pantallas y MFT;

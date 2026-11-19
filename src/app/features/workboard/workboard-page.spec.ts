@@ -2,42 +2,47 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
-import { BatchProcess, ProcessStatus, canDownloadObservations, canDownloadOutput } from '@core/models/batch-process.model';
+import {
+  BatchProcess,
+  ProcessStatus,
+  canDownloadObservations,
+  canDownloadOutput,
+} from '@core/models/batch-process.model';
 import { BatchProcessService } from '@core/services/batch-process.service';
 import { ContextService } from '@core/services/context.service';
 import { WorkboardPage } from './workboard-page';
 
-function process(id: number, status: ProcessStatus, date: string, observations = 0): BatchProcess {
+function process(
+  id: number,
+  status: ProcessStatus,
+  createdAt: string,
+  flags: { hasSuccess?: boolean; hasErrors?: boolean } = {},
+): BatchProcess {
   return {
     id,
-    uuid: `u-${id}`,
-    userId: 1,
     fileName: `archivo-${id}.csv`,
     recordsQuantity: 10,
-    processDate: date,
+    createdAt,
     status,
-    observationsQuantity: observations,
+    hasSuccess: flags.hasSuccess ?? false,
+    successFileName: flags.hasSuccess ? `archivo-${id}_salida.csv` : null,
+    hasErrors: flags.hasErrors ?? false,
+    errorFileName: flags.hasErrors ? `archivo-${id}_errores.txt` : null,
   };
 }
 
 const PROCESSES: BatchProcess[] = [
-  process(1, ProcessStatus.Finished, '2026-11-01T10:00:00Z', 2),
-  process(2, ProcessStatus.Cancelled, '2026-11-03T10:00:00Z', 0),
+  process(1, ProcessStatus.Finished, '2026-11-01T10:00:00Z', { hasSuccess: true, hasErrors: true }),
+  process(2, ProcessStatus.Cancelled, '2026-11-03T10:00:00Z', { hasErrors: true }),
   process(3, ProcessStatus.Pending, '2026-11-02T10:00:00Z'),
 ];
 
 describe('Reglas de descarga', () => {
-  it('Salida solo en FINALIZADO', () => {
-    expect(canDownloadOutput(process(1, ProcessStatus.Finished, ''))).toBeTrue();
-    expect(canDownloadOutput(process(1, ProcessStatus.Cancelled, ''))).toBeFalse();
-    expect(canDownloadOutput(process(1, ProcessStatus.Execution, ''))).toBeFalse();
-  });
-
-  it('Ver Obs. solo si terminó (finalizado o cancelado) y hubo errores', () => {
-    expect(canDownloadObservations(process(1, ProcessStatus.Finished, '', 3))).toBeTrue();
-    expect(canDownloadObservations(process(1, ProcessStatus.Cancelled, '', 1))).toBeTrue();
-    expect(canDownloadObservations(process(1, ProcessStatus.Finished, '', 0))).toBeFalse();
-    expect(canDownloadObservations(process(1, ProcessStatus.Execution, '', 5))).toBeFalse();
+  it('Salida y Ver Obs. dependen de lo que informa el backend (hasSuccess / hasErrors)', () => {
+    expect(canDownloadOutput(process(1, ProcessStatus.Finished, '', { hasSuccess: true }))).toBeTrue();
+    expect(canDownloadOutput(process(1, ProcessStatus.Finished, ''))).toBeFalse();
+    expect(canDownloadObservations(process(1, ProcessStatus.Cancelled, '', { hasErrors: true }))).toBeTrue();
+    expect(canDownloadObservations(process(1, ProcessStatus.Finished, ''))).toBeFalse();
   });
 });
 
@@ -50,10 +55,7 @@ describe('WorkboardPage', () => {
       imports: [WorkboardPage],
       providers: [provideRouter([]), { provide: BatchProcessService, useValue: { getProcesses } }],
     });
-    TestBed.inject(ContextService).setContext(
-      { name: 'ORG', orchestrations: [{ name: 'm' }] },
-      { name: 'm' },
-    );
+    TestBed.inject(ContextService).setContext({ name: 'ORG', orchestrations: [{ name: 'm' }] }, { name: 'm' });
     const fixture = TestBed.createComponent(WorkboardPage);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -61,15 +63,16 @@ describe('WorkboardPage', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  const dataRows = (el: HTMLElement) => Array.from(el.querySelectorAll('tr.mat-mdc-row:not(.mat-mdc-no-data-row)'));
+
   it('carga los procesos de la organización y orquestación activas', async () => {
     await render();
-    expect(getProcesses).toHaveBeenCalledWith('ORG', 'm', 1);
+    expect(getProcesses).toHaveBeenCalledWith('ORG', 'm');
   });
 
   it('ordena más recientes primero con número correlativo descendente', async () => {
     const el = await render();
-    const rows = Array.from(el.querySelectorAll('tr.mat-mdc-row'));
-    const cells = rows.map((r) => [r.children[0].textContent?.trim(), r.children[1].textContent?.trim()]);
+    const cells = dataRows(el).map((r) => [r.children[0].textContent?.trim(), r.children[1].textContent?.trim()]);
     expect(cells).toEqual([
       ['3', 'archivo-2.csv'],
       ['2', 'archivo-3.csv'],
@@ -83,15 +86,14 @@ describe('WorkboardPage', () => {
     expect(el.textContent).not.toContain('Pendiente');
   });
 
-  it('habilita Salida / Ver Obs. según el estado', async () => {
+  it('habilita Salida / Ver Obs. según hasSuccess / hasErrors', async () => {
     const el = await render();
-    const rows = Array.from(el.querySelectorAll('tr.mat-mdc-row'));
-    const disabled = rows.map((r) =>
+    const disabled = dataRows(el).map((r) =>
       Array.from(r.querySelectorAll<HTMLButtonElement>('button')).map((b) => b.disabled),
     );
-    // [Salida, Ver Obs.] por fila: cancelado sin errores, pendiente, finalizado con errores
+    // [Salida, Ver Obs.] por fila: cancelado con errores, pendiente, finalizado con salida y errores
     expect(disabled).toEqual([
-      [true, true],
+      [true, false],
       [true, true],
       [false, false],
     ]);

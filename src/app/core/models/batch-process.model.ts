@@ -1,4 +1,4 @@
-/** Códigos de estado de la tabla batch_status. */
+/** Códigos de estado de la tabla batch_status (campo statusCode del API). */
 export enum ProcessStatus {
   Pending = '001',
   Validation = '002',
@@ -25,20 +25,65 @@ export const STATUS_LABEL: Record<VisibleStatus, string> = {
   cancelled: 'Cancelado',
 };
 
-/** Proceso batch cargado por el usuario. Tabla: batch_process */
+/** Proceso batch del usuario (modelo del front). Tabla: batch_process */
 export interface BatchProcess {
   id: number;
-  uuid: string;
-  /** Usuario que cargó el archivo (batch_user.id). */
-  userId: number;
   fileName: string;
-  /** null hasta que el backend procese el archivo y cuente sus registros. */
+  /** Cantidad de registros del archivo de entrada (null si el backend no la informa). */
   recordsQuantity: number | null;
-  /** Fecha de creación del proceso (ISO 8601). */
-  processDate: string;
+  /** Fecha de creación del proceso (ISO 8601). Es la "Fecha del Procesamiento" que ve el usuario. */
+  createdAt: string;
   status: ProcessStatus;
-  /** Cantidad de registros con error (genera el archivo de observaciones). */
-  observationsQuantity: number;
+  /** Hay archivo de salida (CSV procesado) para descargar. */
+  hasSuccess: boolean;
+  successFileName: string | null;
+  /** Hay archivo de observaciones (registros con error) para descargar. */
+  hasErrors: boolean;
+  errorFileName: string | null;
+}
+
+/**
+ * Proceso batch tal como lo devuelve el backend:
+ * GET /api/listall (lista) y POST /api/batch-processes (proceso creado, con menos campos).
+ */
+export interface BatchProcessDto {
+  id: number;
+  fileName: string;
+  fileProcess?: string | null;
+  recordsQuantity: number | null;
+  createdAt?: string | null;
+  processDate?: string | null;
+  processEndDate?: string | null;
+  uuid?: string | null;
+  statusCode: string;
+  status: string;
+  organization: string;
+  orchestration: string;
+  hasErrors?: boolean | null;
+  errorFilename?: string | null;
+  hasSuccess?: boolean | null;
+  successFilename?: string | null;
+}
+
+/** Body de POST /api/batch-processes. */
+export interface CreateBatchProcessRequest {
+  filename: string;
+  recordsQuantity: number;
+}
+
+/** Convierte la respuesta del backend al modelo del front. */
+export function toBatchProcess(dto: BatchProcessDto): BatchProcess {
+  return {
+    id: dto.id,
+    fileName: dto.fileName,
+    recordsQuantity: dto.recordsQuantity ?? null,
+    createdAt: dto.createdAt ?? new Date().toISOString(),
+    status: dto.statusCode as ProcessStatus,
+    hasSuccess: dto.hasSuccess === true,
+    successFileName: dto.successFilename ?? null,
+    hasErrors: dto.hasErrors === true,
+    errorFileName: dto.errorFilename ?? null,
+  };
 }
 
 /** Filtros de la pantalla Buscar Procesos. */
@@ -52,13 +97,12 @@ export interface ProcessSearchCriteria {
   endDate: Date;
 }
 
-/** Salida disponible solo cuando el proceso terminó correctamente. */
+/** "Salida" se habilita cuando el backend informa que hay archivo de salida. */
 export function canDownloadOutput(process: BatchProcess): boolean {
-  return process.status === ProcessStatus.Finished;
+  return process.hasSuccess;
 }
 
-/** Observaciones disponibles si hubo registros con error en un proceso terminado o cancelado. */
+/** "Ver Obs." se habilita cuando el backend informa que hay archivo de observaciones. */
 export function canDownloadObservations(process: BatchProcess): boolean {
-  const ended = process.status === ProcessStatus.Finished || process.status === ProcessStatus.Cancelled;
-  return ended && process.observationsQuantity > 0;
+  return process.hasErrors;
 }

@@ -5,4 +5,8 @@ export const API_PREFIX = '/ui-batch-latam-backend/api';
 export const API = {
   /** GET: organizaciones del usuario con sus orquestaciones. */
   organizations: `${API_PREFIX}/organizations`,
+  /** GET: procesos batch del usuario (headers organization/orchestration). */
+  listAll: `${API_PREFIX}/listall`,
+  /** POST: crea un proceso batch { filename, recordsQuantity } (headers organization/orchestration). */
+  batchProcesses: `${API_PREFIX}/batch-processes`,
 } as const;

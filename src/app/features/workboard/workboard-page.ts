@@ -17,7 +17,6 @@ import {
 } from '@core/models/batch-process.model';
 import { BatchProcessService } from '@core/services/batch-process.service';
 import { ContextService } from '@core/services/context.service';
-import { UserService } from '@core/services/user.service';
 import { StatusBadge } from '@shared/components/status-badge/status-badge';
 import { saveFile, withSuffix } from '@shared/utils/save-file';
 
@@ -49,39 +48,39 @@ interface WorkboardRow extends BatchProcess {
 export class WorkboardPage {
   private readonly processService = inject(BatchProcessService);
   private readonly context = inject(ContextService);
-  private readonly user = inject(UserService);
 
   protected readonly displayedColumns = [
     'number',
     'fileName',
     'recordsQuantity',
-    'processDate',
+    'createdAt',
     'status',
     'output',
     'observations',
   ];
   protected readonly pageSizeOptions = [15, 30, 50];
 
-  /** Procesos del usuario actual. Se recarga sola al cambiar la organización u orquestación. */
+  /**
+   * Procesos del usuario (el backend los filtra por el usuario del token).
+   * Se recarga sola al cambiar la organización u orquestación.
+   */
   protected readonly processes = rxResource({
     params: () => {
       const organization = this.context.organization();
       const orchestration = this.context.orchestration();
       return organization && orchestration
-        ? { organization: organization.name, orchestration: orchestration.name, userId: this.user.currentUser().id }
+        ? { organization: organization.name, orchestration: orchestration.name }
         : undefined;
     },
     stream: ({ params }) =>
-      params
-        ? this.processService.getProcesses(params.organization, params.orchestration, params.userId)
-        : of([]),
+      params ? this.processService.getProcesses(params.organization, params.orchestration) : of([]),
   });
 
   /** Más recientes primero; el número correlativo más alto es el más reciente. */
   protected readonly rows = computed<WorkboardRow[]>(() => {
     const list = this.processes.hasValue() ? this.processes.value() : [];
     return [...list]
-      .sort((a, b) => b.processDate.localeCompare(a.processDate))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id - a.id)
       .map((process, index, sorted) => ({
         ...process,
         number: sorted.length - index,
@@ -109,12 +108,12 @@ export class WorkboardPage {
   protected downloadOutput(row: WorkboardRow): void {
     this.processService
       .downloadOutput(row)
-      .subscribe((blob) => saveFile(blob, withSuffix(row.fileName, 'salida', 'csv')));
+      .subscribe((blob) => saveFile(blob, row.successFileName ?? withSuffix(row.fileName, 'salida', 'csv')));
   }
 
   protected downloadObservations(row: WorkboardRow): void {
     this.processService
       .downloadObservations(row)
-      .subscribe((blob) => saveFile(blob, withSuffix(row.fileName, 'observaciones', 'txt')));
+      .subscribe((blob) => saveFile(blob, row.errorFileName ?? withSuffix(row.fileName, 'observaciones', 'txt')));
   }
 }

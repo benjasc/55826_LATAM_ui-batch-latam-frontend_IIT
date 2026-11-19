@@ -12,23 +12,25 @@ import { SearchPage } from './search-page';
 const RESULTS: BatchProcess[] = [
   {
     id: 1,
-    uuid: 'a',
-    userId: 2,
     fileName: 'reciente.csv',
     recordsQuantity: 5,
-    processDate: '2026-11-05T10:00:00Z',
+    createdAt: '2026-11-05T10:00:00Z',
     status: ProcessStatus.Finished,
-    observationsQuantity: 0,
+    hasSuccess: true,
+    successFileName: null,
+    hasErrors: false,
+    errorFileName: null,
   },
   {
     id: 2,
-    uuid: 'b',
-    userId: 2,
     fileName: 'antiguo.csv',
     recordsQuantity: null,
-    processDate: '2026-11-01T10:00:00Z',
+    createdAt: '2026-11-01T10:00:00Z',
     status: ProcessStatus.Execution,
-    observationsQuantity: 0,
+    hasSuccess: false,
+    successFileName: null,
+    hasErrors: false,
+    errorFileName: null,
   },
 ];
 
