@@ -110,7 +110,7 @@
 
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Estado de Procesamiento</th>
-          <td mat-cell *matCellDef="let row"><app-status-badge [status]="row.status" /></td>
+          <td mat-cell *matCellDef="let row"><app-status-badge [status]="row.status" [label]="row.statusLabel" /></td>
         </ng-container>
 
         <ng-container matColumnDef="recordsQuantity">

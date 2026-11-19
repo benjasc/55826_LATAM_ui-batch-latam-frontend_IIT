@@ -1,22 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { ProcessStatus, STATUS_LABEL, VISIBLE_STATUS } from '@core/models/batch-process.model';
+import { statusTone } from '@core/models/batch-process.model';
 
-/** Etiqueta de color para el estado de un proceso batch. */
+/**
+ * Etiqueta de estado de un proceso batch.
+ * El texto es el que envía el API (status); el color se elige según el código (statusCode).
+ */
 @Component({
   selector: 'app-status-badge',
-  template: `<span [class]="'badge badge--' + visible()">{{ label() }}</span>`,
+  template: `<span [class]="'badge badge--' + tone()">{{ label() || 'Desconocido' }}</span>`,
   styleUrl: './status-badge.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatusBadge {
-  readonly status = input.required<ProcessStatus>();
+  /** Código de estado (statusCode), por ejemplo "001". */
+  readonly status = input.required<string>();
+  /** Nombre del estado (status), por ejemplo "PENDIENTE". */
+  readonly label = input.required<string>();
 
-  /** Si el backend envía un código desconocido se muestra "Desconocido" en gris. */
-  private readonly known = computed(() => VISIBLE_STATUS[this.status()] ?? null);
-  protected readonly visible = computed(() => this.known() ?? 'validation');
-  protected readonly label = computed(() => {
-    const known = this.known();
-    return known ? STATUS_LABEL[known] : 'Desconocido';
-  });
+  protected readonly tone = computed(() => statusTone(this.status()));
 }

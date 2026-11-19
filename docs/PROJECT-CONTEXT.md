@@ -191,7 +191,7 @@ token.json                            # Token local (NO versionado, en .gitignor
 - **Botones**: "Regresar" vuelve a `/workboard`. "Finalizar" se habilita solo con un archivo válido.
 - **Al finalizar**:
   1. Se llama a `POST /api/batch-processes` con `{ filename, recordsQuantity }` y los headers `organization`/`orchestration`. Mientras tanto se muestra "Creando proceso…" con todos los botones bloqueados.
-  2. Si sale bien, aparece el aviso verde "El proceso se ha creado con éxito.", se navega a `/workboard` y el proceso queda primero con estado Validación (PENDIENTE).
+  2. Si sale bien, aparece el aviso verde "El proceso se ha creado con éxito.", se navega a `/workboard` y el proceso queda primero con el estado que informa el API (PENDIENTE).
   3. **Por ahora no se sube el contenido del archivo**: solo se registran el nombre y la cantidad. La subida a MFT vendrá en otro paso.
   4. Si falla, aparece un aviso rojo y el usuario se queda en la pantalla.
 
@@ -213,13 +213,17 @@ token.json                            # Token local (NO versionado, en .gitignor
 ### 5.5 Estados de proceso
 Los estados vienen de la tabla `batch_status`. El enum es `ProcessStatus` en `batch-process.model.ts`.
 
-| Código | BD | Se muestra al cliente como | Color |
-|---|---|---|---|
-| 001 | PENDIENTE | **Validación** (el cliente no ve PENDIENTE) | gris |
-| 002 | VALIDACIÓN | Validación | gris |
-| 003 | EJECUCIÓN | Ejecución | naranja |
-| 004 | FINALIZADO | Finalizado | verde |
-| 005 | CANCELADO | Cancelado | rojo |
+- **Texto**: es el que envía el API en el campo `status`, sin traducir.
+- **Color**: se elige según `statusCode` (`STATUS_TONE` / `statusTone()`). La etiqueta es `shared/components/status-badge`.
+
+| `statusCode` | `status` (texto que se muestra) | Color |
+|---|---|---|
+| 001 | PENDIENTE | gris claro con borde |
+| 002 | VALIDACIÓN | gris |
+| 003 | EJECUCIÓN | naranja |
+| 004 | FINALIZADO | verde |
+| 005 | CANCELADO | rojo |
+| otro | el texto que envíe el API | gris claro (neutro); si no viene texto, "Desconocido" |
 
 ---
 
@@ -327,7 +331,7 @@ La app corre en un iframe de Liferay y **no tiene login propio**. Patrón de 104
 
 **Headers de contexto**: los endpoints de procesos requieren `organization` y `orchestration`. Cada método de `BatchProcessService` los envía de forma explícita con `contextHeaders()`.
 
-**Mapeo de la respuesta**: se hace con `toBatchProcess()` en `batch-process.model.ts`. El estado sale de `statusCode` (001–005); un código desconocido se muestra como "Desconocido".
+**Mapeo de la respuesta**: se hace con `toBatchProcess()` en `batch-process.model.ts`. El texto del estado es `status` y el color sale de `statusCode` (001–005); un código no contemplado se muestra con color neutro.
 
 **Endpoints de la UI anterior (11919)**: sirven solo como referencia del backend antiguo (`/ui-batch-ic-backend`). Confirmar los equivalentes con el equipo de backend.
 
@@ -394,7 +398,7 @@ ng build                        # build de producción → dist/ui-batch-latam-f
    **Excepción**: las organizaciones sin orquestaciones **no se muestran** (pedido del equipo; antes se mostraban con un error, como en 11919).
 3. **Sin campo "Cantidad de registros"** en Nuevo Procesamiento: **la UI cuenta las filas del CSV** (todas cuentan, porque no hay encabezado) y las envía como `recordsQuantity`.
 4. Salida y Ver Obs. se habilitan según `hasSuccess` / `hasErrors` del backend.
-5. PENDIENTE se muestra como "Validación". El cliente ve 4 estados.
+5. **El nombre del estado se toma del API** (campo `status`), incluido PENDIENTE. Esto reemplaza la regla del documento EX UI.docx, que mostraba solo 4 estados. El `statusCode` define solo el color.
 6. Buscar Procesos mantiene el **selector de usuario para administradores**.
 7. Rango máximo de búsqueda: **30 días**, según `EX UI.docx`. 11919 usaba 365.
 8. Paleta Equifax: rojo `#981e32`, gris `#4d545a`, naranja `#ffa900`, gris de botón `#9d9d9d`. Fuente Open Sans.

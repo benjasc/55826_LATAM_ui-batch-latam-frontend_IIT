@@ -53,6 +53,7 @@ describe('BatchProcessService', () => {
         recordsQuantity: 3333,
         createdAt: '2026-11-19T21:19:56.721Z',
         status: ProcessStatus.Pending,
+        statusLabel: 'PENDIENTE',
         hasSuccess: true,
         successFileName: 'new_file_out.csv',
         hasErrors: false,

@@ -14,6 +14,15 @@ import {
 
 const HOUR = 60 * 60_000;
 
+/** Solo para el mock de búsqueda: nombre de cada estado como lo envía el backend. */
+const MOCK_STATUS_NAME: Record<ProcessStatus, string> = {
+  [ProcessStatus.Pending]: 'PENDIENTE',
+  [ProcessStatus.Validation]: 'VALIDACIÓN',
+  [ProcessStatus.Execution]: 'EJECUCIÓN',
+  [ProcessStatus.Finished]: 'FINALIZADO',
+  [ProcessStatus.Cancelled]: 'CANCELADO',
+};
+
 /** Headers con la organización y orquestación activas, requeridos por los endpoints de procesos. */
 function contextHeaders(organization: string, orchestration: string): HttpHeaders {
   return new HttpHeaders({ organization, orchestration });
@@ -46,6 +55,7 @@ function buildMockSearchProcesses(orchestration: string): (BatchProcess & { user
       recordsQuantity: 50 + ((i * 37) % 900),
       createdAt: new Date(base - (total - 1 - i) * 19 * HOUR).toISOString(),
       status,
+      statusLabel: MOCK_STATUS_NAME[status],
       hasSuccess: status === ProcessStatus.Finished,
       successFileName: null,
       hasErrors: false,

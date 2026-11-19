@@ -24,6 +24,7 @@ function process(
     recordsQuantity: 10,
     createdAt,
     status,
+    statusLabel: { '001': 'PENDIENTE', '004': 'FINALIZADO', '005': 'CANCELADO' }[status as string] ?? 'OTRO',
     hasSuccess: flags.hasSuccess ?? false,
     successFileName: flags.hasSuccess ? `archivo-${id}_salida.csv` : null,
     hasErrors: flags.hasErrors ?? false,
@@ -80,10 +81,10 @@ describe('WorkboardPage', () => {
     ]);
   });
 
-  it('muestra PENDIENTE como Validación', async () => {
+  it('muestra el nombre del estado que envía el API', async () => {
     const el = await render();
-    expect(el.textContent).toContain('Validación');
-    expect(el.textContent).not.toContain('Pendiente');
+    const labels = Array.from(el.querySelectorAll('app-status-badge')).map((b) => b.textContent?.trim());
+    expect(labels).toEqual(['CANCELADO', 'PENDIENTE', 'FINALIZADO']);
   });
 
   it('habilita Salida / Ver Obs. según hasSuccess / hasErrors', async () => {
